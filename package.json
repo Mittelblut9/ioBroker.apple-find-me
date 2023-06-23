@@ -3,10 +3,10 @@
     "version": "0.0.15",
     "description": "Apple Find Me Connector",
     "author": {
-        "name": "MasterDan",
-        "email": "kontakt@daniel-lippert.de"
+        "name": "Mittelblut9",
+        "email": "info@blackdayz.de"
     },
-    "homepage": "https://github.com/PfisterDaniel/ioBroker.apple-find-me",
+    "homepage": "https://github.com/Mittelblut9/ioBroker.apple-find-me",
     "license": "MIT",
     "keywords": [
         "Apple",
@@ -18,7 +18,7 @@
     ],
     "repository": {
         "type": "git",
-        "url": "https://github.com/PfisterDaniel/ioBroker.apple-find-me"
+        "url": "https://github.com/Mittelblut9/ioBroker.apple-find-me"
     },
     "dependencies": {
         "@iobroker/adapter-core": "^2.4.0",
@@ -56,7 +56,7 @@
         "lint": "eslint"
     },
     "bugs": {
-        "url": "https://github.com/PfisterDaniel/ioBroker.apple-find-me/issues"
+        "url": "https://github.com/Mittelblut9/ioBroker.apple-find-me/issues"
     },
     "readmeFilename": "README.md"
 }
