@@ -178,7 +178,7 @@
     },
     "license": "MIT",
     "platform": "Javascript/Node.js",
-    "main": "main.js",
+    "main": "src/main.js",
     "icon": "find-me.png",
     "enabled": false,
     "extIcon": "https://raw.githubusercontent.com/PfisterDaniel/ioBroker.apple-find-me/master/admin/find-me.png",
