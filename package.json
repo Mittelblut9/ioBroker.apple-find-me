@@ -45,7 +45,7 @@
         "sinon": "^9.0.3",
         "sinon-chai": "^3.5.0"
     },
-    "main": "main.js",
+    "main": "src/main.js",
     "scripts": {
         "test:js": "mocha --opts test/mocha.custom.opts",
         "test:package": "mocha test/package --exit",
