@@ -2,3 +2,4 @@ node_modules/
 ._*
 .husky/
 *.md
+admin/index_m.html
