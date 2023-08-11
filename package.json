@@ -22,9 +22,9 @@
     },
     "dependencies": {
         "@iobroker/adapter-core": "^2.4.0",
+        "geopoint": "^1.0.1",
         "moment-timezone": "^0.5.35",
-        "urllib": "^2.36.1",
-        "geopoint": "^1.0.1"
+        "urllib": "^2.36.1"
     },
     "devDependencies": {
         "@iobroker/testing": "^2.5.4",
