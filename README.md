@@ -1,4 +1,6 @@
 ![Logo](https://raw.githubusercontent.com/Mittelblut9/iobroker.apple-find-me/main/admin/find-me.png)
+
+[![wakatime](https://wakatime.com/badge/user/c05093e3-fa05-431b-a1ca-e9b5c343712a/project/a57bddb7-9a19-452e-8ebd-463a85ee8410.svg)](https://wakatime.com/badge/user/c05093e3-fa05-431b-a1ca-e9b5c343712a/project/a57bddb7-9a19-452e-8ebd-463a85ee8410)
 # iobroker.apple-find-me
 
 ## Apple-find-me Adapter for ioBroker
