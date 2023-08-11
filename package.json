@@ -22,7 +22,7 @@
     },
     "main": "src/main.js",
     "scripts": {
-        "test:js": "mocha --opts test/mocha.custom.opts",
+        "test:js": "mocha --config .tools/mocha/.mocharc.js",
         "test:package": "mocha test/package --exit",
         "test:unit": "mocha test/unit --exit",
         "test:integration": "mocha test/integration --exit",
