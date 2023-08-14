@@ -13,6 +13,7 @@ const moment = require('moment-timezone');
 const GeoPoint = require('geopoint');
 const iCloud = require('apple-icloud');
 const CreateOrUpdateDevices = require('./functions/createOrUpdateDevices');
+const loginToApple = require('./functions/loginToApple');
 
 /**
  * The adapter instance
@@ -71,91 +72,6 @@ function startAdapter(options) {
             },
         })
     ));
-}
-
-function getICloudSession() {
-    return new Promise((resolve, reject) => {
-        adapter.getState('iCloudAccountSession', (err, state) => {
-            const newSession = state.val || {};
-            adapter.log.info('session test 1: ' + newSession);
-            adapter.setState('iCloudAccountSession', newSession, true);
-            return resolve(newSession ? JSON.parse(newSession) : {});
-        });
-    });
-}
-
-async function loginToApple() {
-    const username = adapter.config.username;
-    const password = adapter.config.password;
-
-    if (!username || !password) {
-        adapter.log.error('Username or password is missing');
-        return;
-    }
-
-    adapter.log.info('Logging in to iCloud...');
-    adapter.log.info('Username: ' + username);
-
-    try {
-        const session = await getICloudSession();
-
-        if (session === {}) {
-            adapter.log.info('Trying to  login with empty Session');
-        }
-
-        myCloud = new iCloud(session, username, password);
-
-        if (!myCloud.loggedIn) {
-            adapter.log.error('Login failed. Please check your credentials.');
-            return;
-        }
-
-        if (myCloud.twoFactorAuthenticationIsRequired) {
-            prompt.get(['Security Code'], async function (err, input) {
-                if (err) {
-                    adapter.log.error(
-                        `Error. Please check the Security Code. StatusCode: ${
-                            res.statusCode
-                        } (${errCount.toString()}/3)`
-                    );
-                }
-                const code = input['Security Code'];
-                myCloud.securityCode = code;
-            });
-        }
-
-        const newSession = myCloud.exportSession();
-        adapter.setState('iCloudAccountSession', JSON.stringify(newSession), true);
-
-        adapter.log.info('Logged in to iCloud');
-
-        errCount = 0;
-        return {
-            statusCode: 200,
-            response: 'Logged in to iCloud',
-        };
-    } catch (err) {
-        adapter.log.info('error' + err);
-        errCount = errCount + 1;
-        if (errCount == 5) {
-            adapter.log.error(
-                `Error on HTTP-Request. Please check your credentials. StatusCode: ${
-                    err.statusCode
-                } Retry in ${adapter.config.refresh} minutes. (${errCount.toString()}/3)`
-            );
-            adapter.log.error(
-                'HTTP request failed for the third time, adapter is deactivated to prevent deactivation of the iCloud account.'
-            );
-            adapter.setForeignState(`system.adapter.${adapter.namespace}.alive`, false);
-        } else {
-            adapter.log.error(
-                `Error on HTTP-Request. Please check your credentials. StatusCode: ${
-                    err.statusCode
-                } Retry in ${adapter.config.refresh} minutes. (${errCount.toString()}/3)`
-            );
-            return { statusCode: err.statusCode, response: null };
-        }
-    }
 }
 
 /**
@@ -347,7 +263,7 @@ async function main() {
 
     adapter.subscribeStates('Refresh');
 
-    const response = await loginToApple();
+    const response = await loginToApple(adapter);
     adapter.log.info('Login to Apple: ' + JSON.stringify(response));
 
     if (response.statusCode == 200) {
