@@ -161,7 +161,10 @@
             "pl": "Złącze Apple Find Me",
             "zh-cn": "Apple Find Me连接器"
         },
-        "authors": ["Daniel Lippert <kontakt@daniel-lippert.de>"],
+        "authors": [
+            "Daniel Lippert <kontakt@daniel-lippert.de>",
+            "Mittelblut9 <info@blackdayz.de>"
+        ],
         "keywords": ["Apple", "iPhone", "iMac", "iPad", "iCloud", "Location"],
         "docs": {
             "de": "docs/en/README.md",
@@ -172,8 +175,8 @@
         "main": "src/main.js",
         "icon": "find-me.png",
         "enabled": false,
-        "extIcon": "https://raw.githubusercontent.com/PfisterDaniel/ioBroker.apple-find-me/master/admin/find-me.png",
-        "readme": "https://github.com/PfisterDaniel/ioBroker.apple-find-me/blob/master/README.md",
+        "extIcon": "https://raw.githubusercontent.com/Mittelblut9/ioBroker.apple-find-me/main/admin/find-me.png",
+        "readme": "https://github.com/Mittelblut9/ioBroker.apple-find-me/blob/main/README.md",
         "loglevel": "info",
         "mode": "daemon",
         "type": "geoposition",
@@ -214,8 +217,6 @@
     },
     "objects": [],
     "instanceObjects": [],
-
     "encryptedNative": ["username", "password"],
-
     "protectedNative": ["username", "password"]
 }
