@@ -42,7 +42,7 @@
         "apple-icloud": "github:MauriceConrad/iCloud-API",
         "geopoint": "^1.0.1",
         "moment-timezone": "^0.5.35",
-        "urllib": "^2.36.1"
+        "urllib": "^3.17.1"
     },
     "devDependencies": {
         "@iobroker/testing": "^4.1.0",
