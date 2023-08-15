@@ -1,54 +1,38 @@
+const { getRandomObject } = require('../../utils/getRandomObject');
+const { sleep } = require('../../utils/sleep');
+
 /**
  * Function to parse Request-Content and create or update states
  * Input: data (Json-String)
  *
  */
-function CreateOrUpdateDevices(data) {
+function createOrUpdateDevices(data) {
     data.content.forEach((element) => {
         //Sleep for 2 Seconds to prevent Rate-Limits
         sleep(2000);
 
-        var DevColor = '';
-        if (!element.deviceColor && element.deviceColor != '' && element.deviceColor != undefined) {
-            DevColor = '-' + element.deviceColor;
-        }
+        const deviceColor = element.deviceColor ? element.deviceColor : '';
+        const deviceNameWithId = `${element.name.replace(/[^a-zA-Z0-9]/g, '')}${element.id.replace(
+            /[^a-zA-Z0-9]/g,
+            ''
+        )}`;
 
-        let DeviceNameWithID =
-            element.name.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() +
-            element.id.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-        let DiscoveryID = '';
-
-        if (
-            element.deviceDiscoveryId != undefined &&
-            element.deviceDiscoveryId != null &&
-            element.deviceDiscoveryId != ''
-        ) {
-            DiscoveryID = element.deviceDiscoveryId;
-        } else {
-            //Build Dummy DiscoveryID Issue #6
-            DiscoveryID = '0E112CBF-D1B1-0001-B12E-' + DeviceNameWithID.substring(0, 12);
-        }
+        //Build Dummy DiscoveryID Issue https://github.com/PfisterDaniel/ioBroker.apple-find-me/issues/6
+        const dummyDiscoveryId = `0E112CBF-D1B1-0001-B12E-${deviceNameWithId.substring(0, 12)}`;
+        const discoveryId = element.deviceDiscoveryId || dummyDiscoveryId;
 
         adapter.log.debug('Device: ' + element.rawDeviceModel + ' Discovery ID: ' + DiscoveryID);
 
+        const deviceClass = element.deviceClass || 'unknown';
+        const deviceId = element.id || 'unknown';
+        const name = element.name || 'unknown';
+        const batteryStatus = element.batteryStatus || 'unknown';
+        const batteryLevel = element.batteryLevel || 'unknown';
+
+        //location
+        const location = element.location || 'unknown';
+
         if (DiscoveryID != '') {
-            var deviceImageUrl =
-                'https://statici.icloud.com/fmipmobile/deviceImages-9.0/' +
-                element.deviceClass +
-                '/' +
-                element.rawDeviceModel +
-                DevColor +
-                '/online-infobox.png';
-
-            adapter.log.debug(
-                'Device: ' +
-                    element.rawDeviceModel +
-                    ' Discovery ID: ' +
-                    DiscoveryID +
-                    ': Image Url: ' +
-                    deviceImageUrl
-            );
-
             urllib.request(
                 deviceImageUrl,
                 {
@@ -216,28 +200,6 @@ function CreateOrUpdateDevices(data) {
                                 '.BatteryState' +
                                 ' -> ' +
                                 element.batteryStatus
-                        );
-
-                        await adapter.setObjectNotExistsAsync(
-                            element.deviceClass + '.' + DiscoveryID + '.ModelImage',
-                            {
-                                type: 'state',
-                                common: {
-                                    name: 'ModelImage',
-                                    role: 'url',
-                                    type: 'string',
-                                    read: true,
-                                    write: false,
-                                    desc: 'Model Symbol',
-                                    def: '',
-                                },
-                                native: {},
-                            }
-                        );
-                        adapter.setState(
-                            element.deviceClass + '.' + DiscoveryID + '.ModelImage',
-                            deviceImageUrl,
-                            true
                         );
 
                         await adapter.setObjectNotExistsAsync(
@@ -420,7 +382,7 @@ function CreateOrUpdateDevices(data) {
                                     },
                                 ];
 
-                                var OpenEvaltionAPIUrl = getRandomObject(UrlArray);
+                                const OpenEvaltionAPIUrl = getRandomObject(UrlArray);
 
                                 adapter.log.debug(
                                     'Using Elevation-Address: ' + OpenEvaltionAPIUrl.url
@@ -1113,4 +1075,4 @@ function CreateOrUpdateDevices(data) {
     });
 }
 
-module.exports = CreateOrUpdateDevices;
+module.exports = createOrUpdateDevices;

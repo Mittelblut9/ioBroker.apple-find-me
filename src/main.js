@@ -2,6 +2,7 @@
 
 /*
  * Created by Daniel Pfister 2022
+ * Updated by Mittelblut9 2023
  */
 
 /**
@@ -12,19 +13,127 @@ const urllib = require('urllib');
 const moment = require('moment-timezone');
 const GeoPoint = require('geopoint');
 const iCloud = require('apple-icloud');
-const CreateOrUpdateDevices = require('./functions/createOrUpdateDevices');
-const loginToApple = require('./functions/loginToApple');
+const createOrUpdateDevices = require('./functions/Adapter/createOrUpdateDevices');
+const loginToApple = require('./functions/Apple/loginToApple');
+const { Adapter } = require('./data/Adapter');
+const { saveObjectsOnStartup } = require('./functions/Adapter/saveObjectsOnStartup');
+const { getDevices } = require('./functions/Apple/getDevices');
+const playSound = require('./functions/Apple/playSound');
 
 /**
  * The adapter instance
  * @type {ioBroker.Adapter}
  */
-let adapter;
-
 let myCloud;
 
-var errCount = 0;
-var RefreshTimeout = 5000;
+let errCount = 0;
+let refreshTimeout = 5000;
+let timeout;
+
+/**
+ * OnReady Function
+ * it called at Startup the Adapter
+ */
+function onReady() {
+    Adapter.getForeignObject('system.config', (err, obj) => {
+        main();
+    });
+}
+
+/**
+ * Main Function
+ */
+async function main() {
+    //Clear errCount
+    errCount = 0;
+
+    Adapter.log.info('Starting Adapter Apple-Find-Me');
+    if (Adapter.config.refresh != 'none') {
+        Adapter.log.info(`Refresh every ${Adapter.config.refresh} minutes`);
+    } else {
+        Adapter.log.info('Automatic Refresh is disabled');
+    }
+
+    await saveObjectsOnStartup();
+
+    Adapter.subscribeStates('Refresh');
+
+    const response = await loginToApple();
+
+    // DEBUG
+    Adapter.log.info(`Login to Apple: ${JSON.stringify(response)}`);
+
+    if (response.statusCode == 200) {
+        Adapter.setState('Connection', true, true);
+
+        myCloud = response.myCloud;
+
+        let devices = null;
+        try {
+            devices = await getDevices(myCloud);
+        } catch (err) {
+            Adapter.log.error(err);
+            Adapter.log.error(
+                'An error occurred while fetching your devices. This is most likely due no devices being associated with your account. Please check your account and try again.'
+            );
+            return;
+        }
+
+        Adapter.log.info(
+            `Found ${
+                devices.content.length
+            } devices associated with your account. (${devices.content
+                .map((device) => device.name)
+                .join(', ')})`
+        );
+
+        Adapter.setState('Devices', foundDevices.length, true);
+        Adapter.setState('LastJsonResponse', response, true);
+
+        Adapter.log.info(
+            'Creating or updating devices. This may take a while depending on the number of devices you have.'
+        );
+        createOrUpdateDevices(devices);
+    } else {
+        Adapter.setState('Connection', false, true);
+    }
+
+    refresh(true, false);
+}
+
+/***
+ * Refresh function (Reset Data Collector Timer and run Data Collector)
+ ***/
+async function refresh(init, manual) {
+    try {
+        if (init == true && Adapter.config.refresh != 'none') {
+            Adapter.log.debug('Initial Data Collector');
+            timeout = setTimeout(function () {
+                refresh(false, false);
+            }, Adapter.config.refresh * 60000);
+        } else {
+            const devices = await getDevices(myCloud);
+            if (devices) {
+                Adapter.setState('Connection', true, true);
+                createOrUpdateDevices(devices);
+            } else {
+                Adapter.setState('Connection', false, true);
+
+                Adapter.log.error(
+                    'No devices found or an error occurred while fetching your devices.'
+                );
+            }
+        }
+    } catch (err) {
+        Adapter.log.error('Error on refresh: ' + err);
+        //Reset the Timeout else Adapter gets "stuck"
+        if (Adapter.config.refresh != 'none') {
+            timeout = setTimeout(function () {
+                refresh(false, false);
+            }, Adapter.config.refresh * 60000);
+        }
+    }
+}
 
 /**
  * Starts the adapter instance
@@ -32,19 +141,20 @@ var RefreshTimeout = 5000;
  */
 function startAdapter(options) {
     // Create the adapter and define its methods
-    return (adapter = utils.adapter(
+    return (Adapter = utils.adapter(
         Object.assign({}, options, {
             name: 'apple-find-me',
-            ready: onReady, // Main method defined below for readability
+            ready: onReady,
 
             // is called when adapter shuts down - callback has to be called under any circumstances!
             unload: (callback) => {
                 try {
-                    clearTimeout(RefreshTimeout);
-                    callback();
+                    clearTimeout(timeout);
                 } catch (e) {
-                    callback();
+                    Adapter.log.error('Error on unload: ' + e);
                 }
+
+                callback();
             },
             // is called if a subscribed state changes
             stateChange: (id, state) => {
@@ -58,14 +168,14 @@ function startAdapter(options) {
                                 idArray[idArray.length - 1],
                                 'DeviceID'
                             );
-                            adapter.getState(buildDeviceID, (error, state) => {
+                            Adapter.getState(buildDeviceID, (error, state) => {
                                 let DeviceID = state.val;
-                                adapter.log.info('PlaySound on device: ' + DeviceID);
-                                PlaySound(DeviceID);
-                                adapter.setState(id, false, true);
+                                Adapter.log.info('PlaySound on device: ' + DeviceID);
+                                playSound(DeviceID);
+                                Adapter.setState(id, false, true);
                             });
                         } else if (idArray[idArray.length - 1] == 'Refresh') {
-                            Refresh(false, true);
+                            refresh(false, true);
                         }
                     }
                 }
@@ -74,281 +184,11 @@ function startAdapter(options) {
     ));
 }
 
-/**
- *
- * Function to play sound on Apple-Device (Find my iPhone)
- *
- */
-function PlaySound(DeviceID) {
-    const user = adapter.config.username;
-    const pass = adapter.config.password;
-
-    var headers = {
-        'Accept-Language': 'de-DE',
-        'User-Agent': 'FindMyiPhone/500 CFNetwork/758.4.3 Darwin/15.5.0',
-        Authorization: 'Basic ' + Buffer.from(user + ':' + pass).toString('base64'),
-        'X-Apple-Realm-Support': '1.0',
-        'X-Apple-AuthScheme': 'UserIDGuest',
-        'X-Apple-Find-API-Ver': '3.0',
-    };
-
-    var RequestContent = {
-        clientContext: { appVersion: '7.0', fmly: true },
-        device: DeviceID,
-        subject: 'IoBroker (Find-Me)',
-    };
-
-    return new Promise((rtn) => {
-        urllib.request(
-            'https://fmipmobile.icloud.com/fmipservice/device/' + user + '/playSound',
-            {
-                method: 'POST',
-                headers: headers,
-                rejectUnauthorized: false,
-                dataType: 'json',
-                content: JSON.stringify(RequestContent),
-            },
-            function (err, data, res) {
-                if (!err && res.statusCode == 200) {
-                    rtn({
-                        status: 'successfully',
-                        statusCode: 0,
-                        message: 'Sound was played successfully',
-                    });
-                } else {
-                    //Ignore StatusCode -2
-                    if (res.statusCode == -2) {
-                        rtn({ statusCode: res.statusCode, response: null });
-                    } else if (res.statusCode == 500) {
-                        rtn({
-                            status: 'failed',
-                            statusCode: res.statusCode,
-                            message: res.statusMessage,
-                        });
-                    } else {
-                        rtn({
-                            status: 'failed',
-                            statusCode: res.statusCode,
-                            message: res.statusMessage,
-                        });
-                    }
-                }
-            }
-        );
-    });
-}
-
-/**
- * OnReady Function
- * it called at Startup the Adapter
- */
-function onReady() {
-    adapter.getForeignObject('system.config', (err, obj) => {
-        main();
-    });
-}
-/**
- * Function to Sleep
- * @param {*} milliseconds
- * @returns
- */
-function sleep(milliseconds) {
-    const date = Date.now();
-    let currentDate = null;
-    do {
-        currentDate = Date.now();
-    } while (currentDate - date < milliseconds);
-}
-
-/**
- * Get Random Object from an Object Array
- * @param {*} ObjectArray
- * @returns
- */
-function getRandomObject(ObjectArray) {
-    // get random index value
-    const randomIndex = Math.floor(Math.random() * ObjectArray.length);
-
-    // get random object
-    const obj = ObjectArray[randomIndex];
-
-    return obj;
-}
-
-/**
- * Main Function
- */
-async function main() {
-    //Clear errCount
-    errCount = 0;
-
-    adapter.log.info('Starting Adapter Apple-Find-Me');
-    if (adapter.config.refresh != 'none') {
-        adapter.log.info(`Refresh every ${adapter.config.refresh} minutes`);
-    } else {
-        adapter.log.info('Automatic Refresh is disabled');
-    }
-
-    await adapter.setObjectNotExistsAsync('LastJsonResponse', {
-        type: 'state',
-        common: {
-            role: 'text',
-            def: '',
-            type: 'object',
-            read: true,
-            write: false,
-            name: 'LastJsonResponse',
-            desc: 'Last Response from Apple iCloud',
-        },
-        native: {},
-    });
-
-    await adapter.setObjectNotExistsAsync('Connection', {
-        type: 'state',
-        common: {
-            name: 'Connection',
-            role: 'indicator.connected',
-            type: 'boolean',
-            read: true,
-            write: false,
-            desc: 'Connection to iCloud',
-            def: false,
-        },
-        native: {},
-    });
-
-    await adapter.setObjectNotExistsAsync('Account', {
-        type: 'state',
-        common: {
-            name: 'Account',
-            role: 'meta',
-            type: 'string',
-            read: true,
-            write: false,
-            desc: 'iCloud Account',
-        },
-        native: {},
-    });
-
-    adapter.setState('Account', adapter.config.username, true);
-
-    await adapter.setObjectNotExistsAsync('Devices', {
-        type: 'state',
-        common: {
-            name: 'Devices',
-            role: 'meta',
-            type: 'number',
-            read: true,
-            write: false,
-            desc: 'Number of devices',
-            def: 0,
-        },
-        native: {},
-    });
-
-    await adapter.setObjectNotExistsAsync('Refresh', {
-        type: 'state',
-        common: {
-            name: 'Refresh',
-            role: 'button',
-            type: 'boolean',
-            read: true,
-            write: true,
-            desc: 'Reload data from the iCloud',
-            def: false,
-        },
-        native: {},
-    });
-    adapter.setState('Refresh', false, true);
-
-    adapter.subscribeStates('Refresh');
-
-    const response = await loginToApple(adapter);
-    adapter.log.info('Login to Apple: ' + JSON.stringify(response));
-
-    if (response.statusCode == 200) {
-        adapter.setState('Connection', true, true);
-
-        const devices = await myCloud.FindMe.get(adapter.config.username, adapter.config.password);
-        adapter.log.info('Devices: ' + JSON.stringify(devices));
-
-        return;
-        let foundDevs = [];
-        Result.response.content.forEach((element) => {
-            foundDevs.push(element.deviceDisplayName);
-        });
-        adapter.log.info(
-            JSON.stringify(Result.response.content.length) +
-                ' Device(s) found (' +
-                foundDevs.join(', ') +
-                ')'
-        );
-
-        adapter.setState('Devices', Result.response.content.length, true);
-        adapter.setState('LastJsonResponse', JSON.stringify(Result.response), true);
-
-        CreateOrUpdateDevices(Result.response);
-    } else {
-        adapter.setState('Connection', false, true);
-    }
-
-    Refresh(true, false);
-}
-
-/***
- * Refresh function (Reset Data Collector Timer and run Data Collector)
- ***/
-async function Refresh(init, manual) {
-    try {
-        if (init == true) {
-            if (adapter.config.refresh != 'none') {
-                adapter.log.debug('Initial Data Collector');
-                RefreshTimeout = setTimeout(function () {
-                    Refresh(false, false);
-                }, adapter.config.refresh * 60000);
-            }
-        } else {
-            if (manual == true) {
-                adapter.log.debug('Manual Data Collector');
-                var Result = await RequestData(true);
-                if (Result.statusCode == 200) {
-                    adapter.setState('Connection', true, true);
-                    CreateOrUpdateDevices(Result.response);
-                } else {
-                    adapter.setState('Connection', false, true);
-                }
-            } else {
-                adapter.log.debug('Interval Data Collector');
-                var Result = await RequestData(false);
-                if (Result.statusCode == 200) {
-                    adapter.setState('Connection', true, true);
-                    CreateOrUpdateDevices(Result.response);
-                } else {
-                    adapter.setState('Connection', false, true);
-                }
-                if (adapter.config.refresh != 'none') {
-                    RefreshTimeout = setTimeout(function () {
-                        Refresh(false, false);
-                    }, adapter.config.refresh * 60000);
-                }
-            }
-        }
-    } catch (err) {
-        adapter.log.error('Error on Refresh: ' + err);
-        //Reset the Timeout else Adapter gets "stuck"
-        if (adapter.config.refresh != 'none') {
-            RefreshTimeout = setTimeout(function () {
-                Refresh(false, false);
-            }, adapter.config.refresh * 60000);
-        }
-    }
-}
-
 // @ts-ignore parent is a valid property on module
 if (module.parent) {
     // Export startAdapter in compact mode
     module.exports = startAdapter;
 } else {
     // otherwise start the instance directly
-    startAdapter();
+    startAdapter;
 }

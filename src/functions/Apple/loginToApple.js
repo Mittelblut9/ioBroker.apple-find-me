@@ -1,27 +1,28 @@
 const iCloud = require('apple-icloud');
+const { Adapter } = require('../../data/adapter');
 
-module.exports.loginToApple = function loginToApple(adapter) {
+module.exports.loginToApple = function loginToApple() {
     return new Promise(async (resolve, reject) => {
-        const username = adapter.config.username;
-        const password = adapter.config.password;
+        const username = Adapter.config.username;
+        const password = Adapter.config.password;
 
         if (!username || !password) {
-            adapter.log.error('Username or password is missing');
+            Adapter.log.error('Username or password is missing');
             return resolve({
                 statusCode: 401,
                 message: 'Username or password is missing',
             });
         }
 
-        adapter.log.info('Logging in to iCloud...');
-        adapter.log.info('Username: ' + username);
-        adapter.log.info('Password: ' + password);
+        Adapter.log.info('Logging in to iCloud...');
+        Adapter.log.info('Username: ' + username);
+        Adapter.log.info('Password: ' + password);
 
         try {
             let session = await getICloudSession();
 
             if (!session) {
-                adapter.log.info('Trying to login with empty Session');
+                Adapter.log.info('Trying to login with empty Session');
                 session = {};
             }
 
@@ -29,42 +30,43 @@ module.exports.loginToApple = function loginToApple(adapter) {
 
             myCloud.on('ready', async function () {
                 if (!myCloud.loggedIn) {
-                    adapter.log.error('Login failed. Please check your credentials.');
+                    Adapter.log.error('Login failed. Please check your credentials.');
                     return resolve({
                         statusCode: 401,
                         message: 'Login failed. Please check your credentials.',
                     });
                 }
 
-                adapter.log.info('Logged in to iCloud');
+                Adapter.log.info('Logged in to iCloud');
 
                 const isAuthenticated = await handleTwoFactorAuth(myCloud);
 
                 const newSession = myCloud.exportSession();
-                adapter.setState('iCloudAccountSession', JSON.stringify(newSession), true);
+                Adapter.setState('iCloudAccountSession', JSON.stringify(newSession), true);
 
                 errCount = 0;
                 return resolve({
                     statusCode: 200,
                     message: 'Logged in to iCloud',
+                    myCloud,
                 });
             });
         } catch (err) {
-            adapter.log.info('error' + err);
+            Adapter.log.info('error' + err);
             errCount = errCount + 1;
             if (errCount == 5) {
-                adapter.log.error(
+                Adapter.log.error(
                     `Error on HTTP-Request. Please check your credentials. StatusCode: ${err.statusCode}`
                 );
-                adapter.log.error(
-                    'HTTP request failed for the third time, adapter is deactivated to prevent deactivation of the iCloud account.'
+                Adapter.log.error(
+                    'HTTP request failed for the third time, Adapter is deactivated to prevent deactivation of the iCloud account.'
                 );
-                adapter.setForeignState(`system.adapter.${adapter.namespace}.alive`, false);
+                Adapter.setForeignState(`system.Adapter.${Adapter.namespace}.alive`, false);
             } else {
-                adapter.log.error(
+                Adapter.log.error(
                     `Error on HTTP-Request. Please check your credentials. StatusCode: ${
                         err.statusCode
-                    } Retry in ${adapter.config.refresh} minutes. (${errCount.toString()}/3)`
+                    } Retry in ${Adapter.config.refresh} minutes. (${errCount.toString()}/3)`
                 );
                 return { statusCode: err.statusCode, message: err };
             }
@@ -84,15 +86,15 @@ async function handleTwoFactorAuth(myCloud) {
 
 function getICloudSession() {
     return new Promise((resolve, reject) => {
-        adapter.getState('iCloudAccountSession', (err, state) => {
+        Adapter.getState('iCloudAccountSession', (err, state) => {
             const newSession = state?.val || null;
 
             if (!newSession) {
                 return resolve(null);
             }
 
-            adapter.log.info('session test 1: ' + JSON.stringify(newSession));
-            adapter.setState('iCloudAccountSession', newSession, true);
+            Adapter.log.info('session test 1: ' + JSON.stringify(newSession));
+            Adapter.setState('iCloudAccountSession', newSession, true);
             return resolve(newSession ? JSON.parse(newSession) : {});
         });
     });
