@@ -1,7 +1,7 @@
 const iCloud = require('apple-icloud');
 const exampleData = require('../../data/device.example.json');
 
-module.exports.loginToApple = function loginToApple(adapter) {
+module.exports.loginToApple = async function (adapter) {
     return new Promise(async (resolve, reject) => {
         if (process.env.NODE_ENV === 'development') {
             return resolve({
