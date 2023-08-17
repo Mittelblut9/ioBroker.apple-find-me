@@ -106,9 +106,9 @@ class FindMy extends utils.Adapter {
             let devices = null;
             try {
                 devices =
-                    process.env.NODE_ENV === 'development'
+                    this.config.developerMode === '1'
                         ? response.device
-                        : await getDevices(this.myCloud);
+                        : (await getDevices(this.myCloud)).content;
             } catch (err) {
                 this.log.error(err);
                 this.log.error(
@@ -117,16 +117,17 @@ class FindMy extends utils.Adapter {
                 return;
             }
 
-            this.log.info(
-                `Found ${
-                    devices.content.length
-                } devices associated with your account. (${devices.content
-                    .map((device) => device.name)
-                    .join(', ')})`
-            );
+            this.log.info('All Devices: ' + JSON.stringify(devices));
 
-            this.setState('Devices', foundDevices.length, true);
-            this.setState('LastJsonResponse', response, true);
+            this.log.info(`Found ${devices.length} devices associated with your account.`);
+
+            if (!this.config.developerMode === '1') {
+                this.log.info(`
+                    (${devices.map((device) => device.name).join(', ')})
+                        `);
+            }
+
+            this.setState('Devices', devices.length, true);
 
             this.log.info(
                 'Creating or updating devices. This may take a while depending on the number of devices you have.'
