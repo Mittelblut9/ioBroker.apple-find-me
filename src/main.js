@@ -85,11 +85,11 @@ class FindMy extends utils.Adapter {
             this.log.info('Automatic Refresh is disabled');
         }
 
-        await saveObjectsOnStartup(this.adapter);
+        await saveObjectsOnStartup(this);
 
         this.subscribeStates('Refresh');
 
-        const response = await loginToApple(this.adapter);
+        const response = await loginToApple(this);
 
         // DEBUG
         this.log.info(
@@ -131,7 +131,7 @@ class FindMy extends utils.Adapter {
             this.log.info(
                 'Creating or updating devices. This may take a while depending on the number of devices you have.'
             );
-            createOrUpdateDevices(devices, this.adapter);
+            createOrUpdateDevices(devices, this);
         } else {
             this.setState('Connection', false, true);
         }
@@ -150,7 +150,7 @@ class FindMy extends utils.Adapter {
                 const devices = await getDevices(this.myCloud);
                 if (devices) {
                     this.setState('Connection', true, true);
-                    createOrUpdateDevices(devices, this.adapter);
+                    createOrUpdateDevices(devices, this);
                 } else {
                     this.setState('Connection', false, true);
 
