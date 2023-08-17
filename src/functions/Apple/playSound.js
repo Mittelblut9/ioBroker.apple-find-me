@@ -1,5 +1,3 @@
-const { Adapter } = require('../../data/Adapter');
-
 /**
  *
  * Function to play sound on Apple-Device (Find my iPhone)

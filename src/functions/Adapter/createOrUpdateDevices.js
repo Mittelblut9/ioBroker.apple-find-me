@@ -6,7 +6,7 @@ const { sleep } = require('../../utils/sleep');
  * Input: data (Json-String)
  *
  */
-function createOrUpdateDevices(data) {
+function createOrUpdateDevices(data, adapter) {
     data.content.forEach((element) => {
         //Sleep for 2 Seconds to prevent Rate-Limits
         sleep(2000);

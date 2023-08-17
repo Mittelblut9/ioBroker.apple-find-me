@@ -8,7 +8,6 @@
 const utils = require('@iobroker/adapter-core');
 const createOrUpdateDevices = require('./functions/Adapter/createOrUpdateDevices');
 const loginToApple = require('./functions/Apple/loginToApple');
-const { Adapter } = require('./data/Adapter');
 const { saveObjectsOnStartup } = require('./functions/Adapter/saveObjectsOnStartup');
 const { getDevices } = require('./functions/Apple/getDevices');
 const playSound = require('./functions/Apple/playSound');
@@ -34,7 +33,6 @@ class FindMy extends utils.Adapter {
 
     async onReady() {
         this.getForeignObject('system.config', (err, obj) => {
-            Adapter = this;
             main();
         });
     }
@@ -87,11 +85,11 @@ class FindMy extends utils.Adapter {
             this.log.info('Automatic Refresh is disabled');
         }
 
-        await saveObjectsOnStartup();
+        await saveObjectsOnStartup(this.adapter);
 
         this.subscribeStates('Refresh');
 
-        const response = await loginToApple();
+        const response = await loginToApple(this.adapter);
 
         // DEBUG
         this.log.info(
@@ -133,7 +131,7 @@ class FindMy extends utils.Adapter {
             this.log.info(
                 'Creating or updating devices. This may take a while depending on the number of devices you have.'
             );
-            createOrUpdateDevices(devices);
+            createOrUpdateDevices(devices, this.adapter);
         } else {
             this.setState('Connection', false, true);
         }
@@ -152,7 +150,7 @@ class FindMy extends utils.Adapter {
                 const devices = await getDevices(this.myCloud);
                 if (devices) {
                     this.setState('Connection', true, true);
-                    createOrUpdateDevices(devices);
+                    createOrUpdateDevices(devices, this.adapter);
                 } else {
                     this.setState('Connection', false, true);
 

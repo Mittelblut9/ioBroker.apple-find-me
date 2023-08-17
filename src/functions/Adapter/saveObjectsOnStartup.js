@@ -1,7 +1,5 @@
-const { Adapter } = require('../../data/adapter');
-
-module.exports.saveObjectsOnStartup = async function () {
-    await Adapter.setObjectNotExistsAsync('LastJsonResponse', {
+module.exports.saveObjectsOnStartup = async function (adapter) {
+    await adapter.setObjectNotExistsAsync('LastJsonResponse', {
         type: 'state',
         common: {
             role: 'text',
@@ -15,7 +13,7 @@ module.exports.saveObjectsOnStartup = async function () {
         native: {},
     });
 
-    await Adapter.setObjectNotExistsAsync('Connection', {
+    await adapter.setObjectNotExistsAsync('Connection', {
         type: 'state',
         common: {
             name: 'Connection',
@@ -29,7 +27,7 @@ module.exports.saveObjectsOnStartup = async function () {
         native: {},
     });
 
-    await Adapter.setObjectNotExistsAsync('Account', {
+    await adapter.setObjectNotExistsAsync('Account', {
         type: 'state',
         common: {
             name: 'Account',
@@ -42,9 +40,9 @@ module.exports.saveObjectsOnStartup = async function () {
         native: {},
     });
 
-    Adapter.setState('Account', Adapter.config.username, true);
+    adapter.setState('Account', adapter.config.username, true);
 
-    await Adapter.setObjectNotExistsAsync('Devices', {
+    await adapter.setObjectNotExistsAsync('Devices', {
         type: 'state',
         common: {
             name: 'Devices',
@@ -58,7 +56,7 @@ module.exports.saveObjectsOnStartup = async function () {
         native: {},
     });
 
-    await Adapter.setObjectNotExistsAsync('Refresh', {
+    await adapter.setObjectNotExistsAsync('Refresh', {
         type: 'state',
         common: {
             name: 'Refresh',
@@ -71,5 +69,5 @@ module.exports.saveObjectsOnStartup = async function () {
         },
         native: {},
     });
-    Adapter.setState('Refresh', false, true);
+    adapter.setState('Refresh', false, true);
 };
