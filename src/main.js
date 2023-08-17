@@ -5,7 +5,6 @@
  * Updated by Mittelblut9 2023
  */
 
-
 const utils = require('@iobroker/adapter-core');
 const createOrUpdateDevices = require('./functions/Adapter/createOrUpdateDevices');
 const loginToApple = require('./functions/Apple/loginToApple');
@@ -59,7 +58,7 @@ class FindMy extends utils.Adapter {
      * @param {ioBroker.State | null | undefined} state
      */
     onStateChange(id, state) {
-        if(!state || state.ack) return;
+        if (!state || state.ack) return;
 
         // The state was changed with no ack
         const idArray = id.split('.');
