@@ -33,7 +33,7 @@ class FindMy extends utils.Adapter {
 
     async onReady() {
         this.getForeignObject('system.config', (err, obj) => {
-            main();
+            this.main();
         });
     }
 
@@ -141,7 +141,7 @@ class FindMy extends utils.Adapter {
 
     async refresh(init) {
         try {
-            if (init == true && this.config.refresh != 'none') {
+            if (init && this.config.refresh != 'none') {
                 this.log.debug('Initial Data Collector');
                 this.timeout = setTimeout(function () {
                     this.refresh(false);
