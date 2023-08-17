@@ -5,9 +5,7 @@
  * Updated by Mittelblut9 2023
  */
 
-/**
- * Load modules
- */
+
 const utils = require('@iobroker/adapter-core');
 const urllib = require('urllib');
 const moment = require('moment-timezone');
@@ -23,7 +21,6 @@ class FindMy extends utils.Adapter {
     myCloud;
 
     errCount = 0;
-    refreshTimeout = 5000;
     timeout;
 
     /**
@@ -41,8 +38,8 @@ class FindMy extends utils.Adapter {
 
     async onReady() {
         this.getForeignObject('system.config', (err, obj) => {
-            main();
             Adapter = this;
+            main();
         });
     }
 
@@ -119,7 +116,7 @@ class FindMy extends utils.Adapter {
                 devices =
                     process.env.NODE_ENV === 'development'
                         ? response.device
-                        : await getDevices(myCloud);
+                        : await getDevices(this.myCloud);
             } catch (err) {
                 this.log.error(err);
                 this.log.error(
@@ -158,7 +155,7 @@ class FindMy extends utils.Adapter {
                     this.refresh(false);
                 }, this.config.refresh * 60000);
             } else {
-                const devices = await getDevices(myCloud);
+                const devices = await getDevices(this.myCloud);
                 if (devices) {
                     this.setState('Connection', true, true);
                     createOrUpdateDevices(devices);
