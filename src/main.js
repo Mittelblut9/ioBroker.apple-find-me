@@ -12,7 +12,6 @@ const utils = require('@iobroker/adapter-core');
 const urllib = require('urllib');
 const moment = require('moment-timezone');
 const GeoPoint = require('geopoint');
-const iCloud = require('apple-icloud');
 const createOrUpdateDevices = require('./functions/Adapter/createOrUpdateDevices');
 const loginToApple = require('./functions/Apple/loginToApple');
 const { Adapter } = require('./data/Adapter');
@@ -61,16 +60,23 @@ async function main() {
     const response = await loginToApple();
 
     // DEBUG
-    Adapter.log.info(`Login to Apple: ${JSON.stringify(response)}`);
+    Adapter.log.info(
+        `Login to Apple: ${JSON.stringify(response)} ${
+            response?.developerMode ? '(Developer Mode)' : ''
+        }`
+    );
 
     if (response.statusCode == 200) {
         Adapter.setState('Connection', true, true);
 
-        myCloud = response.myCloud;
+        myCloud = response?.myCloud;
 
         let devices = null;
         try {
-            devices = await getDevices(myCloud);
+            devices =
+                process.env.NODE_ENV === 'development'
+                    ? response.device
+                    : await getDevices(myCloud);
         } catch (err) {
             Adapter.log.error(err);
             Adapter.log.error(

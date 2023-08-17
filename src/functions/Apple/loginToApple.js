@@ -1,8 +1,17 @@
 const iCloud = require('apple-icloud');
 const { Adapter } = require('../../data/adapter');
+const exampleData = require('../../data/device.example.json');
 
 module.exports.loginToApple = function loginToApple() {
     return new Promise(async (resolve, reject) => {
+        if (process.env.NODE_ENV === 'development') {
+            return resolve({
+                statusCode: 200,
+                developerMode: true,
+                device: exampleData,
+            });
+        }
+
         const username = Adapter.config.username;
         const password = Adapter.config.password;
 
