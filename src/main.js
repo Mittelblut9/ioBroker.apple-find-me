@@ -7,7 +7,7 @@
 
 const utils = require('@iobroker/adapter-core');
 const createOrUpdateDevices = require('./functions/Adapter/createOrUpdateDevices');
-const loginToApple = require('./functions/Apple/loginToApple');
+const { loginToApple } = require('./functions/Apple/loginToApple');
 const { saveObjectsOnStartup } = require('./functions/Adapter/saveObjectsOnStartup');
 const { getDevices } = require('./functions/Apple/getDevices');
 const playSound = require('./functions/Apple/playSound');
