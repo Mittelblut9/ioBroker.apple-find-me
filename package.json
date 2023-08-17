@@ -29,7 +29,7 @@
         "test": "npm run test:js && npm run test:package",
         "release": "release-script",
         "lint": "eslint",
-        "postinstall": "husky install &> /dev/null",
+        "postinstall": "husky install > /dev/null 2>&1",
         "format": "prettier --config .tools/prettier/.prettierrc --ignore-path .tools/prettier/.prettierignore --write .",
         "check-format": "prettier --config .tools/prettier/.prettierrc --ignore-path .tools/prettier/.prettierignore --check ."
     },
