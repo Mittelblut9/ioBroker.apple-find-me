@@ -213,7 +213,8 @@
                 "longitude": "0.000000",
                 "active": false
             }
-        ]
+        ],
+        "developerMode": false
     },
     "objects": [],
     "instanceObjects": [],

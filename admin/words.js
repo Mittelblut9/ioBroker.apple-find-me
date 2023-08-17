@@ -458,4 +458,16 @@ systemDictionary = {
         pl: 'Klucz API',
         'zh-cn': 'API密钥',
     },
+    DeveloperMode: {
+        en: 'Developer Mode',
+        de: 'Entwickler Modus',
+        ru: 'Режим разработчика',
+        pt: 'Modo de desenvolvimento',
+        nl: 'Ontwikkelaarsmodus',
+        fr: 'Mode développeur',
+        it: 'Modalità sviluppatore',
+        es: 'Modo Desarrollador',
+        pl: 'Tryb dewelopera',
+        'zh-cn': '开发人员模式',
+    },
 };

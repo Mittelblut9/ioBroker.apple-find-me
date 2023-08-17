@@ -3,7 +3,8 @@ const exampleData = require('../../data/device.example.json');
 
 module.exports.loginToApple = async function (adapter) {
     return new Promise(async (resolve, reject) => {
-        if (process.env.NODE_ENV === 'development') {
+        adapter.log.info(adapter.config.developerMode);
+        if (adapter.config.developerMode === '1') {
             return resolve({
                 statusCode: 200,
                 developerMode: true,
