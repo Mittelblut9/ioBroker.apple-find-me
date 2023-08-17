@@ -7,9 +7,6 @@
 
 
 const utils = require('@iobroker/adapter-core');
-const urllib = require('urllib');
-const moment = require('moment-timezone');
-const GeoPoint = require('geopoint');
 const createOrUpdateDevices = require('./functions/Adapter/createOrUpdateDevices');
 const loginToApple = require('./functions/Apple/loginToApple');
 const { Adapter } = require('./data/Adapter');
@@ -62,23 +59,21 @@ class FindMy extends utils.Adapter {
      * @param {ioBroker.State | null | undefined} state
      */
     onStateChange(id, state) {
-        if (state) {
-            if (!state.ack) {
-                // The state was changed with no ack
-                const idArray = id.split('.');
+        if(!state || state.ack) return;
 
-                if (idArray[idArray.length - 1] == 'PlaySound') {
-                    const buildDeviceID = id.replace(idArray[idArray.length - 1], 'DeviceID');
-                    Adapter.getState(buildDeviceID, (error, state) => {
-                        let DeviceID = state.val;
-                        Adapter.log.info('PlaySound on device: ' + DeviceID);
-                        playSound(DeviceID);
-                        Adapter.setState(id, false, true);
-                    });
-                } else if (idArray[idArray.length - 1] == 'Refresh') {
-                    refresh(false, true);
-                }
-            }
+        // The state was changed with no ack
+        const idArray = id.split('.');
+
+        if (idArray[idArray.length - 1] == 'PlaySound') {
+            const buildDeviceID = id.replace(idArray[idArray.length - 1], 'DeviceID');
+            this.getState(buildDeviceID, (error, state) => {
+                let DeviceID = state.val;
+                this.log.info('PlaySound on device: ' + DeviceID);
+                playSound(DeviceID);
+                this.setState(id, false, true);
+            });
+        } else if (idArray[idArray.length - 1] == 'Refresh') {
+            refresh(false, true);
         }
     }
 
