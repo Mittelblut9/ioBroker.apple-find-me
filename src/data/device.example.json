@@ -100,7 +100,7 @@
         "positionType": "Unknown",
         "secureLocation": null,
         "secureLocationTs": 0,
-        "latitude": 50.61886336677379,
+        "latitude": 20.61846331677379,
         "floorLevel": 0,
         "horizontalAccuracy": 5,
         "locationType": "",
@@ -108,7 +108,7 @@
         "locationFinished": true,
         "verticalAccuracy": 0,
         "locationMode": null,
-        "longitude": 7.023242266738159
+        "longitude": 40.023242263731159
     },
     "deviceModel": "Watch6_7-1-26-0",
     "maxMsgChar": 70,
