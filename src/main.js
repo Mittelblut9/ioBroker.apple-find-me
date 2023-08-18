@@ -11,11 +11,11 @@ const { loginToApple } = require('./functions/Apple/loginToApple');
 const { saveObjectsOnStartup } = require('./functions/Adapter/saveObjectsOnStartup');
 const { getDevices } = require('./functions/Apple/getDevices');
 const playSound = require('./functions/Apple/playSound');
+const { getErrCount } = require('./data/errCount');
 
 class FindMy extends utils.Adapter {
     myCloud;
 
-    errCount = 0;
     timeout;
 
     /**
@@ -76,7 +76,7 @@ class FindMy extends utils.Adapter {
 
     async main() {
         //Clear errCount
-        this.errCount = 0;
+        this.errCount = getErrCount(this);
 
         this.log.info('Starting Adapter Apple-Find-Me');
         if (this.config.refresh != 'none') {

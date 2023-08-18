@@ -1,5 +1,5 @@
 module.exports.saveObjectsOnStartup = async function (adapter) {
-    await adapter.setObjectNotExistsAsync('LastJsonResponse', {
+    await adapter.setObjectNotExistsAsync('iCloudAccountSession', {
         type: 'state',
         common: {
             role: 'text',
@@ -7,8 +7,8 @@ module.exports.saveObjectsOnStartup = async function (adapter) {
             type: 'object',
             read: true,
             write: false,
-            name: 'LastJsonResponse',
-            desc: 'Last Response from Apple iCloud',
+            name: 'iCloudAccountSession',
+            desc: 'The saved session for to easily login to iCloud',
         },
         native: {},
     });

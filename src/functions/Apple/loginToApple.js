@@ -1,9 +1,11 @@
 const iCloud = require('apple-icloud');
 const exampleData = require('../../data/device.example.json');
+const { increaseErrCount, getErrCount, resetErrCount } = require('../../data/errCount');
 
 module.exports.loginToApple = async function (adapter) {
     return new Promise(async (resolve, reject) => {
         if (adapter.config.developerMode === '1') {
+            adapter.log.info('Developer mode is active. Using example data.');
             return resolve({
                 statusCode: 200,
                 developerMode: true,
@@ -28,16 +30,18 @@ module.exports.loginToApple = async function (adapter) {
         try {
             let session = await getICloudSession(adapter);
 
-            if (!session) {
+            if (!session || Object.keys(session).length === 0) {
                 adapter.log.warn(
                     'Trying to login with empty Session. If this warn appears often (without an Instance restart), please stop the Instance and open an issue on GitHub.'
                 );
                 session = {};
+            }else {
+                adapter.log.info('Session found. Trying to login with existing Session.');
             }
 
-            myCloud.securityCode = adapter.config.securityCode || null;
+            const myCloud = new iCloud(session, username, password);
 
-            myCloud = new iCloud(session, username, password);
+            myCloud.securityCode = adapter.config.securityCode || null;
 
             myCloud.on('ready', async function () {
                 if (!myCloud.loggedIn) {
@@ -50,19 +54,10 @@ module.exports.loginToApple = async function (adapter) {
 
                 adapter.log.info('Logged in to iCloud');
 
-                const twoFactorAuthRequired = myCloud.twoFactorAuthenticationIsRequired;
+                setICloudSession(adapter, myCloud.exportSession());
 
-                if (!isAuthenticated) {
-                    return resolve({
-                        statusCode: 404,
-                        message: 'Missing two factor authentication code.',
-                    });
-                }
+                resetErrCount(adapter);
 
-                const newSession = myCloud.exportSession();
-                adapter.setState('iCloudAccountSession', JSON.stringify(newSession), true);
-
-                errCount = 0;
                 return resolve({
                     statusCode: 200,
                     message: 'Logged in to iCloud',
@@ -70,9 +65,9 @@ module.exports.loginToApple = async function (adapter) {
                 });
             });
         } catch (err) {
-            adapter.log.error('Error while trying to create the iCloud connection' + err);
-            errCount = errCount + 1;
-            if (errCount == 5) {
+            adapter.log.error('Error while trying to create the iCloud connection ' + err);
+            increaseErrCount(adapter)
+            if (getErrCount(adapter) >= 5) {
                 adapter.log.error(
                     `Error on HTTP-Request. Please check your credentials. StatusCode: ${err.statusCode}`
                 );
@@ -84,7 +79,7 @@ module.exports.loginToApple = async function (adapter) {
                 adapter.log.error(
                     `Error on HTTP-Request. Please check your credentials. StatusCode: ${
                         err.statusCode
-                    } Retry in ${adapter.config.refresh} minutes. (${errCount.toString()}/3)`
+                    } Retry in ${adapter.config.refresh} minutes. (${getErrCount(adapter).toString()}/3)`
                 );
                 return { statusCode: err.statusCode, message: err };
             }
@@ -94,17 +89,26 @@ module.exports.loginToApple = async function (adapter) {
 
 function getICloudSession(adapter) {
     return new Promise((resolve, reject) => {
-        //TODO add session to a permanent storage
         adapter.getState('iCloudAccountSession', (err, state) => {
-            const newSession = state?.val || null;
-
-            if (!newSession) {
-                return resolve(null);
+            if (err) {
+                adapter.log.error('Error while reading Session from State: ' + err);
             }
 
-            adapter.log.info('session test 1: ' + JSON.stringify(newSession));
-            adapter.setState('iCloudAccountSession', newSession, true);
-            return resolve(newSession ? JSON.parse(newSession) : {});
+            if (state && state.val) {
+                try {
+                    const session = JSON.parse(state.val);
+                    resolve(session);
+                } catch (err) {
+                    adapter.log.error('Error while parsing Session from State: (Its empty)' + err);
+                    resolve({});
+                }
+            }else {
+                resolve({});
+            }
         });
     });
+}
+
+function setICloudSession (adapter, session) {
+    adapter.setState('iCloudAccountSession', JSON.stringify(session), true);
 }
