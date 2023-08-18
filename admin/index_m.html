@@ -189,28 +189,6 @@
                     }
                 });
 
-
-                $('#apple2fa').hide();
-                $('#requestAppleToken').click(async function() {
-                    const response = await loginToApple();
-
-                    switch(response.status) {
-                        case 200:
-                            // no token needed. No 2fa enabled
-                            break;
-                        case 404:
-                            // 2fa enabled
-                            $('#requestAppleToken').remove();
-                            $('#apple2fa').show();
-                            break;
-                        case 401:
-                            alert('Apple Login failed. Please check your credentials');
-                            break;
-                        default:
-                            alert('Apple Login failed. Some unknown error occured');
-                    }
-                });
-
                 onChange(false);
 
                 values2table('locations', locations, onChange);
@@ -290,11 +268,17 @@
 
                         <div class="col s6 input-field">
                             <i class="material-icons prefix">lock</i>
-                            <button id="requestAppleToken">Request Token (Only if you have two factor authentication enabled)</button>
-                            <div id="apple2fa">
-                                <input type="password" class="value" id="securityCode" />
-                                <label for="securityCode" class="translate">Enter your Security Code which you have received by SMS or Push Notification</label>
-                            </div>
+                            <input type="number" class="value" id="securityCode" />
+                            <label for="securityCode" class="translate">
+                                <span style="color: red;">
+                                    Follow these steps to make everything right. <br />
+                                    1. Insert your username and password <br />
+                                    2. Save & Close <br />
+                                    3. Start the adapter (it should occure an error, saying that 2FA is neeed) <br />
+                                    4. Insert the security code you have received by SMS or Push Notification <br />
+                                </span>
+                                (If you have Two Factor Authentication enabled) <br />
+                            </label>
                         </div>
 
                         <div class="input-field col s6">
