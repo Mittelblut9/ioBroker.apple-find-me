@@ -1,4 +1,4 @@
-const { adapter } = require("@iobroker/adapter-core");
+const { adapter } = require('@iobroker/adapter-core');
 
 let errCount = 0;
 
