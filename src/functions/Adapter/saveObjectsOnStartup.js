@@ -70,4 +70,18 @@ module.exports.saveObjectsOnStartup = async function (adapter) {
         native: {},
     });
     adapter.setState('Refresh', false, true);
+
+    await adapter.setObjectNotExistsAsync('securityCode', {
+        type: 'state',
+        common: {
+            name: 'Security Code',
+            role: 'button',
+            type: 'boolean',
+            read: true,
+            write: true,
+            desc: 'Security Code for 2FA',
+            def: false,
+        },
+        native: {},
+    });
 };
