@@ -11,8 +11,8 @@ const GeoPoint = require('geopoint');
  */
 function createOrUpdateDevices(data, adapter) {
     data.forEach(async (element) => {
-        //Sleep for 2 Seconds to prevent Rate-Limits
-        sleep(2000);
+        //Sleep for 5 Seconds to prevent Rate-Limits
+        sleep(5000);
 
         const deviceColor = element.deviceColor ? element.deviceColor : '';
         const deviceNameWithId = `${element.name.replace(/[^a-zA-Z0-9]/g, '')}${element.id.replace(
