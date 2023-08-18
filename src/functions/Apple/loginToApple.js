@@ -24,15 +24,16 @@ module.exports.loginToApple = async function (adapter) {
 
         adapter.log.info('Logging in to iCloud...');
         adapter.log.info('Username: ' + username);
-        adapter.log.info('Password: ' + password);
 
         try {
             let session = await getICloudSession(adapter);
 
             if (!session) {
-                adapter.log.info('Trying to login with empty Session');
+                adapter.log.warn('Trying to login with empty Session. If this warn appears often (without an Instance restart), please stop the Instance and open an issue on GitHub.');
                 session = {};
             }
+
+            myCloud.securityCode = adapter.config.securityCode || null;
 
             myCloud = new iCloud(session, username, password);
 
@@ -47,7 +48,14 @@ module.exports.loginToApple = async function (adapter) {
 
                 adapter.log.info('Logged in to iCloud');
 
-                const isAuthenticated = await handleTwoFactorAuth(myCloud);
+                const twoFactorAuthRequired = myCloud.twoFactorAuthenticationIsRequired;
+
+                if(!isAuthenticated) {
+                    return resolve({
+                        statusCode: 404,
+                        message: 'Missing two factor authentication code.',
+                    });
+                }
 
                 const newSession = myCloud.exportSession();
                 adapter.setState('iCloudAccountSession', JSON.stringify(newSession), true);
@@ -60,7 +68,7 @@ module.exports.loginToApple = async function (adapter) {
                 });
             });
         } catch (err) {
-            adapter.log.info('error' + err);
+            adapter.log.error('Error while trying to create the iCloud connection' + err);
             errCount = errCount + 1;
             if (errCount == 5) {
                 adapter.log.error(
@@ -82,18 +90,9 @@ module.exports.loginToApple = async function (adapter) {
     });
 };
 
-async function handleTwoFactorAuth(myCloud) {
-    if (myCloud.twoFactorAuthenticationIsRequired) {
-        const code = prompt('Please enter your two-factor authentication code');
-        myCloud.securityCode = code;
-        return false;
-    } else {
-        return true;
-    }
-}
-
 function getICloudSession(adapter) {
     return new Promise((resolve, reject) => {
+        //TODO add session to a permanent storage
         adapter.getState('iCloudAccountSession', (err, state) => {
             const newSession = state?.val || null;
 
