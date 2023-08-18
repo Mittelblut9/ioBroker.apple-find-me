@@ -23,6 +23,13 @@
                 // example: select elements with id=key and class=value and insert value
                 if (!settings) return;
                 // if (settings.electricityPollingInterval === undefined) settings.electricityPollingInterval = 20;
+
+                //create timezones
+                const allTimezones = Intl.supportedValuesOf('timeZone');
+                for (let i in allTimezones) {
+                    $('#timezone').append('<option value="' + allTimezones[i] + '">' + allTimezones[i] + '</option>');
+                }
+
                 $('.value').each(function () {
                     var $key = $(this);
                     var id = $key.attr('id');
@@ -204,13 +211,6 @@
                     }
                 });
 
-                //create timezones
-                const allTimezones = Intl.supportedValuesOf('timeZone');
-
-                for (let i in allTimezones) {
-                    $('#timezone').append('<option value="' + allTimezones[i] + '">' + allTimezones[i] + '</option>');
-                }
-
                 onChange(false);
 
                 values2table('locations', locations, onChange);
@@ -333,6 +333,7 @@
                             </select> 
                             <label for="timezone" class="translate">Timezone</label>
                         </div>
+
                         <div class="col s6 input-field">
                             <i class="material-icons prefix">more</i>
                             <input type="text" class="value" id="timeformat" />
