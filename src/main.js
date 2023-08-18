@@ -12,11 +12,13 @@ const { saveObjectsOnStartup } = require('./functions/Adapter/saveObjectsOnStart
 const { getDevices } = require('./functions/Apple/getDevices');
 const playSound = require('./functions/Apple/playSound');
 const { getErrCount } = require('./data/errCount');
+const { refreshDevices } = require('./functions/Adapter/refreshDevices');
+const { sleep } = require('./utils/sleep');
 
 class FindMy extends utils.Adapter {
     myCloud;
 
-    timeout;
+    interval;
 
     /**
      * @param {Partial<utils.AdapterOptions>} [options={}]
@@ -43,7 +45,7 @@ class FindMy extends utils.Adapter {
      */
     onUnload(callback) {
         try {
-            clearTimeout(this.timeout);
+            clearInterval(this.interval);
             callback();
         } catch (e) {
             callback();
@@ -63,20 +65,21 @@ class FindMy extends utils.Adapter {
 
         if (idArray[idArray.length - 1] == 'PlaySound') {
             const buildDeviceID = id.replace(idArray[idArray.length - 1], 'DeviceID');
-            this.getState(buildDeviceID, (error, state) => {
-                let DeviceID = state.val;
-                this.log.info('PlaySound on device: ' + DeviceID);
-                playSound(DeviceID);
+            this.getState(buildDeviceID, async (error, state) => {
+                const deviceID = state.val;
+                await playSound(deviceID);
+
+                this.log.info('PlaySound on device: ' + deviceID);
                 this.setState(id, false, true);
             });
         } else if (idArray[idArray.length - 1] == 'Refresh') {
-            refresh(false, true);
+            this.refresh(true);
         }
     }
 
     async main() {
         //Clear errCount
-        this.errCount = getErrCount(this);
+        this.errCount = await getErrCount(this);
 
         this.log.info('Starting Adapter Apple-Find-Me');
         if (this.config.refresh != 'none') {
@@ -137,37 +140,28 @@ class FindMy extends utils.Adapter {
             this.setState('Connection', false, true);
         }
 
+        //init refresh
         this.refresh(true);
+
+        //refresh every x minutes
+        this.refresh();
     }
 
-    async refresh(init) {
-        try {
-            if (init && this.config.refresh != 'none') {
-                this.log.debug('Initial Data Collector');
-                this.timeout = setTimeout(function () {
-                    this.refresh(false);
-                }, this.config.refresh * 60000);
-            } else {
-                const devices = await getDevices(this.myCloud);
-                if (devices) {
-                    this.setState('Connection', true, true);
-                    createOrUpdateDevices(devices, this);
-                } else {
-                    this.setState('Connection', false, true);
-
-                    this.log.error(
-                        'No devices found or an error occurred while fetching your devices.'
-                    );
+    refresh(manualRefresh = false) {
+        if (manualRefresh) {
+            this.log.info('Manual Refresh triggered');
+            refreshDevices(this, this.myCloud);
+        } else {
+            this.interval = this.setInterval(() => {
+                try {
+                    this.log.info('Automatic Refresh triggered');
+                    refreshDevices(this, this.myCloud);
+                } catch (err) {
+                    this.log.error('Error on refresh: ' + err);
+                    clearInterval(this.interval);
+                    this.refresh();
                 }
-            }
-        } catch (err) {
-            this.log.error('Error on refresh: ' + err);
-            //Reset the Timeout else Adapter gets "stuck"
-            if (this.config.refresh != 'none') {
-                this.timeout = setTimeout(function () {
-                    this.refresh(false);
-                }, this.config.refresh * 60000);
-            }
+            }, this.config.refresh * 60000);
         }
     }
 }
