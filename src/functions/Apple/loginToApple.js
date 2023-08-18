@@ -1,6 +1,11 @@
 const iCloud = require('apple-icloud');
 const exampleData = require('../../data/device.example.json');
 const { increaseErrCount, getErrCount, resetErrCount } = require('../../data/errCount');
+const { sleep } = require('../../utils/sleep');
+
+let loginRequest = 0;
+let maxLoginRequestPerMin = 3;
+let requestsInLastMin = [];
 
 module.exports.loginToApple = async function (adapter) {
     return new Promise(async (resolve, reject) => {
@@ -35,8 +40,16 @@ module.exports.loginToApple = async function (adapter) {
                     'Trying to login with empty Session. If this warn appears often (without an Instance restart), please stop the Instance and open an issue on GitHub.'
                 );
                 session = {};
-            }else {
+            } else {
                 adapter.log.info('Session found. Trying to login with existing Session.');
+            }
+
+            const maxLoginRequestReached = hasTooManyRequests();
+            if (maxLoginRequestReached) {
+                adapter.log.error(
+                    '!!!!To many login requests. Waiting 30 Seconds to prevent deactivation of the iCloud account. Please check your credentials, stop the adapter or report the issue to the Developer!!!!!'
+                );
+                await sleep(30000);
             }
 
             const myCloud = new iCloud(session, username, password);
@@ -66,8 +79,9 @@ module.exports.loginToApple = async function (adapter) {
             });
         } catch (err) {
             adapter.log.error('Error while trying to create the iCloud connection ' + err);
-            increaseErrCount(adapter)
-            if (getErrCount(adapter) >= 5) {
+            increaseErrCount(adapter);
+            const currentErrCount = await getErrCount(adapter);
+            if (currentErrCount >= 3) {
                 adapter.log.error(
                     `Error on HTTP-Request. Please check your credentials. StatusCode: ${err.statusCode}`
                 );
@@ -79,7 +93,7 @@ module.exports.loginToApple = async function (adapter) {
                 adapter.log.error(
                     `Error on HTTP-Request. Please check your credentials. StatusCode: ${
                         err.statusCode
-                    } Retry in ${adapter.config.refresh} minutes. (${getErrCount(adapter).toString()}/3)`
+                    } Retry in ${adapter.config.refresh} minutes. (${currentErrCount.toString()}/3)`
                 );
                 return { statusCode: err.statusCode, message: err };
             }
@@ -102,13 +116,29 @@ function getICloudSession(adapter) {
                     adapter.log.error('Error while parsing Session from State: (Its empty)' + err);
                     resolve({});
                 }
-            }else {
+            } else {
                 resolve({});
             }
         });
     });
 }
 
-function setICloudSession (adapter, session) {
+function setICloudSession(adapter, session) {
     adapter.setState('iCloudAccountSession', JSON.stringify(session), true);
+}
+
+function hasTooManyRequests() {
+    const now = new Date().getTime();
+    requestsInLastMin = requestsInLastMin.filter((time) => time > now - 60000);
+    if (requestsInLastMin.length >= maxLoginRequestPerMin) {
+        loginRequest++;
+        if (loginRequest >= maxLoginRequestPerMin) {
+            loginRequest = 0;
+            return true;
+        }
+    } else {
+        loginRequest = 0;
+    }
+    requestsInLastMin.push(now);
+    return false;
 }
