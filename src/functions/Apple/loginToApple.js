@@ -29,7 +29,9 @@ module.exports.loginToApple = async function (adapter) {
             let session = await getICloudSession(adapter);
 
             if (!session) {
-                adapter.log.warn('Trying to login with empty Session. If this warn appears often (without an Instance restart), please stop the Instance and open an issue on GitHub.');
+                adapter.log.warn(
+                    'Trying to login with empty Session. If this warn appears often (without an Instance restart), please stop the Instance and open an issue on GitHub.'
+                );
                 session = {};
             }
 
@@ -50,7 +52,7 @@ module.exports.loginToApple = async function (adapter) {
 
                 const twoFactorAuthRequired = myCloud.twoFactorAuthenticationIsRequired;
 
-                if(!isAuthenticated) {
+                if (!isAuthenticated) {
                     return resolve({
                         statusCode: 404,
                         message: 'Missing two factor authentication code.',
