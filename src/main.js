@@ -120,8 +120,6 @@ class FindMy extends utils.Adapter {
                 return;
             }
 
-            this.log.info('All Devices: ' + JSON.stringify(devices));
-
             this.log.info(`Found ${devices.length} devices associated with your account.`);
 
             if (!this.config.developerMode === '1') {
@@ -130,7 +128,7 @@ class FindMy extends utils.Adapter {
                         `);
             }
 
-            this.setState('Devices', devices.length, true);
+            this.setState('Devices', JSON.stringify(devices), true);
 
             this.log.info(
                 'Creating or updating devices. This may take a while depending on the number of devices you have.'

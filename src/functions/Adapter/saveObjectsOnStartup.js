@@ -50,7 +50,7 @@ module.exports.saveObjectsOnStartup = async function (adapter) {
             type: 'number',
             read: true,
             write: false,
-            desc: 'Number of devices',
+            desc: 'All devices associated with the iCloud account',
             def: 0,
         },
         native: {},

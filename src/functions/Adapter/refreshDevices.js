@@ -8,9 +8,10 @@ module.exports.refreshDevices = async function (adapter, myCloud) {
 
             const devices = (await getDevices(myCloud)).content;
 
-            adapter.log.info('All Devices: ' + JSON.stringify(devices));
+            adapter.setState('Devices', JSON.stringify(devices), true);
 
             if (devices) {
+                this.log.info(`Found ${devices.length} devices associated with your account.`);
                 adapter.setState('Connection', true, true);
                 createOrUpdateDevices(devices, adapter);
             } else {
