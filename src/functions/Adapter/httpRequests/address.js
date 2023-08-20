@@ -21,10 +21,10 @@ module.exports.addressRequest = ({ mapProvider, apiKey, lat, lng }) => {
             rejectUnauthorized: false,
             dataType: 'json',
         });
-        if (res.statusCode !== 200) {
+        if (res.status !== 200) {
             return reject(
                 `Error in address request, status code: ${
-                    res.statusCode
+                    res.status
                 }. Full response: ${JSON.stringify(res)}`
             );
         }

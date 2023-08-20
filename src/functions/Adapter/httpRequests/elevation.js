@@ -23,7 +23,7 @@ module.exports.elevationRequest = (lat, lng) => {
                 dataType: 'json',
             });
 
-            if (res.statusCode === 200) {
+            if (res.status === 200) {
                 const elevationVal = parseFloat(data.results[0].elevation.toFixed(2));
                 return resolve({
                     url: openEvaltionAPIUrl.url,
@@ -32,7 +32,7 @@ module.exports.elevationRequest = (lat, lng) => {
             }
             return reject(
                 `Error in elevation request, status code: ${
-                    res.statusCode
+                    res.status
                 }. Full response: ${JSON.stringify(res)}`
             );
         } catch (error) {
