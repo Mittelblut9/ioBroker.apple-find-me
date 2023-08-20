@@ -54,8 +54,6 @@ module.exports.loginToApple = async function (adapter) {
 
             const myCloud = new iCloud(session, username, password);
 
-            myCloud.securityCode = adapter.config.securityCode || null;
-
             myCloud.on('ready', async function () {
                 if (!myCloud.loggedIn) {
                     adapter.log.error('Login failed. Please check your credentials.');
