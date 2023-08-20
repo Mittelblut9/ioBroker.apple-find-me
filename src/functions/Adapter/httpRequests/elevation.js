@@ -30,6 +30,13 @@ module.exports.elevationRequest = (lat, lng) => {
                     elevation: elevationVal,
                 });
             }
+
+            if (res.status === 429) {
+                return reject(
+                    `Too many requests to ${openEvaltionAPIUrl.url}. The request will be retried at the next refresh.`
+                );
+            }
+
             return reject(
                 `Error in elevation request, status code: ${
                     res.status
