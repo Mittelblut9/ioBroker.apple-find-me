@@ -31,7 +31,7 @@ module.exports.elevationRequest = (lat, lng) => {
                         elevation: elevationVal,
                     });
                 } else {
-                    return reject(0);
+                    return reject(err);
                 }
             }
         );
