@@ -7,15 +7,15 @@ module.exports.elevationRequest = (lat, lng) => {
             const apis = [
                 {
                     id: 1,
-                    url: `https://api.opentopodata.org/v1/eudem25m?locations=${element.location.latitude.toString()},${element.location.longitude.toString()}`,
+                    url: `https://api.opentopodata.org/v1/eudem25m?locations=${lat.toString()},${lng.toString()}`,
                 },
                 {
                     id: 2,
-                    url: `https://api.open-elevation.com/api/v1/lookup?locations=${element.location.latitude.toString()},${element.location.longitude.toString()}`,
+                    url: `https://api.open-elevation.com/api/v1/lookup?locations=${lat.toString()},${lng.toString()}`,
                 },
             ];
 
-            const openEvaltionAPIUrl = getRandomObject(UrlArray);
+            const openEvaltionAPIUrl = getRandomObject(apis);
 
             const { data, res } = await urllib.request(openEvaltionAPIUrl.url, {
                 method: 'GET',

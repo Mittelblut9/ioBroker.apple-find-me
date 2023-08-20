@@ -477,7 +477,7 @@ function createOrUpdateDevices(data, adapter) {
                     }
                 );
 
-                if (adapter.config.mapprovider && adapter.config.apikey) {
+                if (adapter.config.mapprovider && adapter.config.apikey.search('XXX') === -1) {
                     try {
                         const { address, url } = await addressRequest({
                             mapProvider: adapter.config.mapprovider,
