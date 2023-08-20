@@ -477,32 +477,34 @@ function createOrUpdateDevices(data, adapter) {
                     }
                 );
 
-                try {
-                    const { address, url } = await addressRequest({
-                        mapProvider: adapter.config.mapprovider,
-                        apiKey: adapter.config.apikey,
-                        lat: element.location.latitude,
-                        lng: element.location.longitude,
-                    });
+                if (adapter.config.mapprovider && adapter.config.apikey) {
+                    try {
+                        const { address, url } = await addressRequest({
+                            mapProvider: adapter.config.mapprovider,
+                            apiKey: adapter.config.apikey,
+                            lat: element.location.latitude,
+                            lng: element.location.longitude,
+                        });
 
-                    adapter.log.debug('Using MapApiUrl-Address: ' + url);
+                        adapter.log.debug('Using MapApiUrl-Address: ' + url);
 
-                    adapter.setState(
-                        element.deviceClass + '.' + discoveryId + '.Location.CurrentAddress',
-                        CurrentAddress,
-                        true
-                    );
-                } catch (err) {
-                    adapter.log.warn(
-                        `Error on getting address from OpenStreetMaps: ${JSON.stringify(
-                            err
-                        )}. Setting to < ErrorCode ${err.statusCode} >`
-                    );
-                    adapter.setState(
-                        element.deviceClass + '.' + discoveryId + '.Location.CurrentAddress',
-                        '< ErrorCode ' + err.statusCode + ' >',
-                        true
-                    );
+                        adapter.setState(
+                            element.deviceClass + '.' + discoveryId + '.Location.CurrentAddress',
+                            CurrentAddress,
+                            true
+                        );
+                    } catch (err) {
+                        adapter.log.warn(
+                            `Error on getting address from OpenStreetMaps: ${JSON.stringify(
+                                err
+                            )}. Setting to < ErrorCode ${err.statusCode} >`
+                        );
+                        adapter.setState(
+                            element.deviceClass + '.' + discoveryId + '.Location.CurrentAddress',
+                            '< ErrorCode ' + err.statusCode + ' >',
+                            true
+                        );
+                    }
                 }
 
                 await adapter.setObjectNotExistsAsync(
