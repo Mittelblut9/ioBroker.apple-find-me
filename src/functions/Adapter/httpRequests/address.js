@@ -13,33 +13,32 @@ const apis = {
 };
 
 module.exports.addressRequest = ({ mapProvider, apiKey, lat, lng }) => {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         const apiUrl = dataTransformer(mapProvider, apiKey, lat, lng);
 
-        urllib.request(
-            apiUrl,
-            {
-                method: 'GET',
-                rejectUnauthorized: false,
-                dataType: 'json',
-            },
-            function (err, data, res) {
-                if (err || !res.statusCode == 200) {
-                    return reject(err);
-                }
+        const { data, res } = urllib.request(apiUrl, {
+            method: 'GET',
+            rejectUnauthorized: false,
+            dataType: 'json',
+        });
+        if (res.statusCode !== 200) {
+            return reject(
+                `Error in address request, status code: ${
+                    res.statusCode
+                }. Full response: ${JSON.stringify(res)}`
+            );
+        }
 
-                if (!data.hasOwnerProperty('address')) {
-                    return reject('No address found');
-                }
+        if (!data.hasOwnerProperty('address')) {
+            return reject('No address found');
+        }
 
-                const currentAdress = responseDataTransformer(mapProvider, data);
+        const currentAdress = responseDataTransformer(mapProvider, data);
 
-                return resolve({
-                    url: apiUrl,
-                    address: currentAdress,
-                });
-            }
-        );
+        return resolve({
+            url: apiUrl,
+            address: currentAdress,
+        });
     });
 };
 
