@@ -1,8 +1,9 @@
 const { getRandomObject } = require('../../utils/getRandomObject');
 const { sleep } = require('../../utils/sleep');
-const urllib = require('urllib');
-const moment = require('moment');
+const moment = require('moment-timezone');
 const GeoPoint = require('geopoint');
+const { elevationRequest } = require('./httpRequests/elevation');
+const { addressRequest } = require('./httpRequests/address');
 
 /**
  * Function to parse Request-Content and create or update states
@@ -352,53 +353,34 @@ function createOrUpdateDevices(data, adapter) {
                     }
                 );
 
-                if (element.location.altitude == 0.0) {
-                    var UrlArray = [
-                        {
-                            id: 1,
-                            url: `https://api.opentopodata.org/v1/eudem25m?locations=${element.location.latitude.toString()},${element.location.longitude.toString()}`,
-                        },
-                        {
-                            id: 2,
-                            url: `https://api.open-elevation.com/api/v1/lookup?locations=${element.location.latitude.toString()},${element.location.longitude.toString()}`,
-                        },
-                    ];
+                const elevation = await elevationRequest(
+                    element.location.latitude,
+                    element.location.longitude
+                )
+                    .then((res) => {
+                        const url = res.url;
+                        const elevation = res.elevation;
 
-                    const OpenEvaltionAPIUrl = getRandomObject(UrlArray);
+                        adapter.log.debug('Elevation-Address: ' + url);
 
-                    adapter.log.debug('Using Elevation-Address: ' + OpenEvaltionAPIUrl.url);
-
-                    urllib.request(
-                        OpenEvaltionAPIUrl.url,
-                        {
-                            method: 'GET',
-                            rejectUnauthorized: false,
-                            dataType: 'json',
-                        },
-                        function (err, data, res) {
-                            if (!err && res.statusCode == 200) {
-                                var AltValue = parseFloat(data.results[0].elevation.toFixed(2));
-                                adapter.setState(
-                                    element.deviceClass + '.' + discoveryId + '.Location.Altitude',
-                                    AltValue,
-                                    true
-                                );
-                            } else {
-                                adapter.setState(
-                                    element.deviceClass + '.' + discoveryId + '.Location.Altitude',
-                                    0,
-                                    true
-                                );
-                            }
-                        }
-                    );
-                } else {
-                    adapter.setState(
-                        element.deviceClass + '.' + discoveryId + '.Location.Altitude',
-                        element.location.altitude,
-                        true
-                    );
-                }
+                        adapter.setState(
+                            element.deviceClass + '.' + discoveryId + '.Location.Altitude',
+                            elevation,
+                            true
+                        );
+                    })
+                    .catch((err) => {
+                        adapter.log.error(
+                            `Error while getting elevation data. Setting to 0. Error: ${JSON.stringify(
+                                err
+                            )}`
+                        );
+                        adapter.setState(
+                            element.deviceClass + '.' + discoveryId + '.Location.Altitude',
+                            0,
+                            true
+                        );
+                    });
 
                 await adapter.setObjectNotExistsAsync(
                     element.deviceClass + '.' + discoveryId + '.Location.Accuracy',
@@ -441,40 +423,42 @@ function createOrUpdateDevices(data, adapter) {
                     }
                 );
 
-                //TODO moment.tz is not working
-                // var timeStampString = moment(new Date(element.location.timeStamp))
-                //     .tz(adapter.config.timezone)
-                //     .format(adapter.config.timeformat);
-                // adapter.setState(
-                //     element.deviceClass + '.' + discoveryId + '.Location.TimeStamp',
-                //     timeStampString,
-                //     true
-                // );
+                const timeStampString = moment(element.location.timeStamp)
+                    .tz(adapter.config.timezone)
+                    .format(adapter.config.timeformat);
 
-                // await adapter.setObjectNotExistsAsync(
-                //     element.deviceClass + '.' + discoveryId + '.RefreshTimeStamp',
-                //     {
-                //         type: 'state',
-                //         common: {
-                //             name: 'RefreshTimeStamp',
-                //             role: 'text',
-                //             type: 'string',
-                //             read: true,
-                //             write: false,
-                //             desc: 'TimeStamp of last refresh',
-                //             def: '',
-                //         },
-                //         native: {},
-                //     }
-                // );
-                // var refreshTimeStampString = moment(new Date())
-                //     .tz(adapter.config.timezone)
-                //     .format(adapter.config.timeformat);
-                // adapter.setState(
-                //     element.deviceClass + '.' + discoveryId + '.RefreshTimeStamp',
-                //     refreshTimeStampString,
-                //     true
-                // );
+                adapter.setState(
+                    `${element.deviceClass}.${discoveryId}.Location.TimeStamp`,
+                    timeStampString,
+                    true
+                );
+
+                await adapter.setObjectNotExistsAsync(
+                    element.deviceClass + '.' + discoveryId + '.RefreshTimeStamp',
+                    {
+                        type: 'state',
+                        common: {
+                            name: 'RefreshTimeStamp',
+                            role: 'text',
+                            type: 'string',
+                            read: true,
+                            write: false,
+                            desc: 'TimeStamp of last refresh',
+                            def: '',
+                        },
+                        native: {},
+                    }
+                );
+
+                const refreshTimeStampString = moment(new Date())
+                    .tz(adapter.config.timezone)
+                    .format(adapter.config.timeformat);
+
+                adapter.setState(
+                    element.deviceClass + '.' + discoveryId + '.RefreshTimeStamp',
+                    refreshTimeStampString,
+                    true
+                );
 
                 await adapter.setObjectNotExistsAsync(
                     element.deviceClass + '.' + discoveryId + '.Location.CurrentAddress',
@@ -493,391 +477,33 @@ function createOrUpdateDevices(data, adapter) {
                     }
                 );
 
-                var MapApiUrl = '';
-                if (adapter.config.mapprovider === 'osm') {
-                    MapApiUrl =
-                        'https://nominatim.openstreetmap.org/reverse?format=json&accept-language=de-DE&lat=' +
-                        element.location.latitude +
-                        '&lon=' +
-                        element.location.longitude +
-                        '&zoom=18&addressdetails=1';
-                } else if (adapter.config.mapprovider === 'bing') {
-                    MapApiUrl =
-                        'https://dev.virtualearth.net/REST/v1/Locations/' +
-                        element.location.latitude.toFixed(6) +
-                        ',' +
-                        element.location.longitude.toFixed(6) +
-                        '?incl=ciso2&inclnb=1&key=' +
-                        adapter.config.apikey;
-                } else if (adapter.config.mapprovider === 'here') {
-                    MapApiUrl =
-                        'https://revgeocode.search.hereapi.com/v1/revgeocode?at=' +
-                        element.location.latitude.toFixed(6) +
-                        ',' +
-                        element.location.longitude.toFixed(6) +
-                        '&apiKey=' +
-                        adapter.config.apikey;
-                } else if (adapter.config.mapprovider === 'google') {
-                    MapApiUrl =
-                        'https://maps.googleapis.com/maps/api/geocode/json?latlng=' +
-                        element.location.latitude +
-                        ',' +
-                        element.location.longitude +
-                        '&language=de&result_type=street_address&key=' +
-                        adapter.config.apikey;
-                } else if (adapter.config.mapprovider === 'geoapify') {
-                    MapApiUrl =
-                        'https://api.geoapify.com/v1/geocode/reverse?lat=' +
-                        element.location.latitude +
-                        '&lon=' +
-                        element.location.longitude +
-                        '&apiKey=' +
-                        adapter.config.apikey;
-                } else if (adapter.config.mapprovider === 'locationiq_eu') {
-                    MapApiUrl =
-                        'https://eu1.locationiq.com/v1/reverse?key=' +
-                        adapter.config.apikey +
-                        '&lat=' +
-                        element.location.latitude +
-                        '&lon=' +
-                        element.location.longitude +
-                        '&format=json';
-                } else if (adapter.config.mapprovider === 'locationiq_usa') {
-                    MapApiUrl =
-                        'https://us1.locationiq.com/v1/reverse?key=' +
-                        adapter.config.apikey +
-                        '&lat=' +
-                        element.location.latitude +
-                        '&lon=' +
-                        element.location.longitude +
-                        '&format=json';
-                } else if (adapter.config.mapprovider === 'positionstack') {
-                    MapApiUrl =
-                        'http://api.positionstack.com/v1/reverse?access_key=' +
-                        adapter.config.apikey +
-                        '&query=' +
-                        element.location.latitude +
-                        ',' +
-                        element.location.longitude +
-                        '&output=json&limit=1';
-                } else if (adapter.config.mapprovider === 'tomtom') {
-                    MapApiUrl =
-                        'https://api.tomtom.com/search/2/reverseGeocode/' +
-                        element.location.latitude +
-                        '%2C' +
-                        element.location.longitude +
-                        '?key=' +
-                        adapter.config.apikey +
-                        '&ext=json';
+                try {
+                    const { address, url } = await addressRequest({
+                        mapProvider: adapter.config.mapprovider,
+                        apiKey: adapter.config.apikey,
+                        lat: element.location.latitude,
+                        lng: element.location.longitude,
+                    });
+
+                    adapter.log.debug('Using MapApiUrl-Address: ' + url);
+
+                    adapter.setState(
+                        element.deviceClass + '.' + discoveryId + '.Location.CurrentAddress',
+                        CurrentAddress,
+                        true
+                    );
+                } catch (err) {
+                    adapter.log.warn(
+                        `Error on getting address from OpenStreetMaps: ${JSON.stringify(
+                            err
+                        )}. Setting to < ErrorCode ${err.statusCode} >`
+                    );
+                    adapter.setState(
+                        element.deviceClass + '.' + discoveryId + '.Location.CurrentAddress',
+                        '< ErrorCode ' + err.statusCode + ' >',
+                        true
+                    );
                 }
-
-                adapter.log.debug('Using MapApiUrl-Address: ' + MapApiUrl);
-
-                urllib.request(
-                    MapApiUrl,
-                    {
-                        method: 'GET',
-                        rejectUnauthorized: false,
-                        dataType: 'json',
-                    },
-                    function (err, data, res) {
-                        //if OpenStreetMap
-                        if (adapter.config.mapprovider === 'osm') {
-                            if (!err && res.statusCode == 200) {
-                                var CurrentAddress = '';
-                                if (data.hasOwnProperty('address')) {
-                                    var AddressObject = data.address;
-                                    if (AddressObject.hasOwnProperty('road')) {
-                                        CurrentAddress += AddressObject.road;
-                                        if (AddressObject.hasOwnProperty('house_number')) {
-                                            CurrentAddress += ' ' + AddressObject.house_number;
-                                        }
-                                        CurrentAddress += ', ';
-                                    }
-                                    if (AddressObject.hasOwnProperty('postcode')) {
-                                        CurrentAddress += AddressObject.postcode + ' ';
-                                    }
-                                    if (AddressObject.hasOwnProperty('village')) {
-                                        CurrentAddress += AddressObject.village;
-                                    } else {
-                                        if (AddressObject.hasOwnProperty('town')) {
-                                            CurrentAddress += AddressObject.town;
-                                        }
-                                    }
-                                } else {
-                                    CurrentAddress = 'Response has no Address Object';
-                                }
-                                adapter.setState(
-                                    element.deviceClass +
-                                        '.' +
-                                        discoveryId +
-                                        '.Location.CurrentAddress',
-                                    CurrentAddress,
-                                    true
-                                );
-                            } else {
-                                adapter.log.warn('Error on getting address from OpenStreetMaps');
-                                adapter.setState(
-                                    element.deviceClass +
-                                        '.' +
-                                        discoveryId +
-                                        '.Location.CurrentAddress',
-                                    '< ErrorCode ' + res.statusCode + ' >',
-                                    true
-                                );
-                            }
-                        } else if (adapter.config.mapprovider === 'bing') {
-                            if (!err && res.statusCode == 200) {
-                                var CurrentAddress =
-                                    data.resourceSets[0].resources[0].address.formattedAddress;
-                                adapter.setState(
-                                    element.deviceClass +
-                                        '.' +
-                                        discoveryId +
-                                        '.Location.CurrentAddress',
-                                    CurrentAddress,
-                                    true
-                                );
-                            } else {
-                                if (res.statusCode == 401) {
-                                    adapter.log.warn(
-                                        'API-Key not valid. Please Validate your API-KEY!'
-                                    );
-                                    adapter.setState(
-                                        element.deviceClass +
-                                            '.' +
-                                            discoveryId +
-                                            '.Location.CurrentAddress',
-                                        '< No valid API-KEY >',
-                                        true
-                                    );
-                                }
-                            }
-                        } else if (adapter.config.mapprovider === 'here') {
-                            if (!err && res.statusCode == 200) {
-                                try {
-                                    var CurrentAddress = data.items[0].address.label;
-                                    adapter.setState(
-                                        element.deviceClass +
-                                            '.' +
-                                            discoveryId +
-                                            '.Location.CurrentAddress',
-                                        CurrentAddress,
-                                        true
-                                    );
-                                } catch (e) {
-                                    adapter.log.warn(
-                                        'Error on getting address from Here-Maps: ' + e
-                                    );
-                                    adapter.setState(
-                                        element.deviceClass +
-                                            '.' +
-                                            discoveryId +
-                                            '.Location.CurrentAddress',
-                                        '< Error ' + e + ' >',
-                                        true
-                                    );
-                                }
-                            } else {
-                                adapter.log.warn('Error on getting address from Here-Maps');
-                                adapter.setState(
-                                    element.deviceClass +
-                                        '.' +
-                                        discoveryId +
-                                        '.Location.CurrentAddress',
-                                    '< ErrorCode ' + res.statusCode + ' >',
-                                    true
-                                );
-                            }
-                        } else if (adapter.config.mapprovider === 'google') {
-                            if (!err && res.statusCode == 200) {
-                                if (data.status == 'OK') {
-                                    var CurrentAddress = data.results[0].formatted_address;
-                                    adapter.setState(
-                                        element.deviceClass +
-                                            '.' +
-                                            discoveryId +
-                                            '.Location.CurrentAddress',
-                                        CurrentAddress,
-                                        true
-                                    );
-                                } else {
-                                    adapter.log.warn(
-                                        'Error on getting address from Google-Maps (' +
-                                            data.status +
-                                            ') - ' +
-                                            data.error_message
-                                    );
-                                    adapter.setState(
-                                        element.deviceClass +
-                                            '.' +
-                                            discoveryId +
-                                            '.Location.CurrentAddress',
-                                        '< Error: ' + data.status + ' >',
-                                        true
-                                    );
-                                }
-                            } else {
-                                adapter.log.warn('Error on getting address from Google-Maps');
-                                adapter.setState(
-                                    element.deviceClass +
-                                        '.' +
-                                        discoveryId +
-                                        '.Location.CurrentAddress',
-                                    '< ErrorCode ' + res.statusCode + ' >',
-                                    true
-                                );
-                            }
-                        } else if (adapter.config.mapprovider === 'geoapify') {
-                            if (!err && res.statusCode == 200) {
-                                try {
-                                    var CurrentAddress = data.features[0].properties.formatted;
-                                    adapter.setState(
-                                        element.deviceClass +
-                                            '.' +
-                                            discoveryId +
-                                            '.Location.CurrentAddress',
-                                        CurrentAddress,
-                                        true
-                                    );
-                                } catch (e) {
-                                    adapter.log.warn(
-                                        'Error on getting address from Geoapify: ' + e
-                                    );
-                                    adapter.setState(
-                                        element.deviceClass +
-                                            '.' +
-                                            discoveryId +
-                                            '.Location.CurrentAddress',
-                                        '< Error ' + e + ' >',
-                                        true
-                                    );
-                                }
-                            } else {
-                                adapter.log.warn('Error on getting address from Geoapify');
-                                adapter.setState(
-                                    element.deviceClass +
-                                        '.' +
-                                        discoveryId +
-                                        '.Location.CurrentAddress',
-                                    '< ErrorCode ' + res.statusCode + ' >',
-                                    true
-                                );
-                            }
-                        } else if (
-                            adapter.config.mapprovider === 'locationiq_eu' ||
-                            adapter.config.mapprovider === 'locationiq_usa'
-                        ) {
-                            if (!err && res.statusCode == 200) {
-                                try {
-                                    var CurrentAddress = data.display_name;
-                                    adapter.setState(
-                                        element.deviceClass +
-                                            '.' +
-                                            discoveryId +
-                                            '.Location.CurrentAddress',
-                                        CurrentAddress,
-                                        true
-                                    );
-                                } catch (e) {
-                                    adapter.log.warn(
-                                        'Error on getting address from LocationIQ: ' + e
-                                    );
-                                    adapter.setState(
-                                        element.deviceClass +
-                                            '.' +
-                                            discoveryId +
-                                            '.Location.CurrentAddress',
-                                        '< Error ' + e + ' >',
-                                        true
-                                    );
-                                }
-                            } else {
-                                adapter.log.warn('Error on getting address from LocationIQ');
-                                adapter.setState(
-                                    element.deviceClass +
-                                        '.' +
-                                        discoveryId +
-                                        '.Location.CurrentAddress',
-                                    '< ErrorCode ' + res.statusCode + ' >',
-                                    true
-                                );
-                            }
-                        } else if (adapter.config.mapprovider === 'positionstack') {
-                            if (!err && res.statusCode == 200) {
-                                try {
-                                    var CurrentAddress = data.data[0].label;
-                                    adapter.setState(
-                                        element.deviceClass +
-                                            '.' +
-                                            discoveryId +
-                                            '.Location.CurrentAddress',
-                                        CurrentAddress,
-                                        true
-                                    );
-                                } catch (e) {
-                                    adapter.log.warn(
-                                        'Error on getting address from PositionStack: ' + e
-                                    );
-                                    adapter.setState(
-                                        element.deviceClass +
-                                            '.' +
-                                            discoveryId +
-                                            '.Location.CurrentAddress',
-                                        '< Error ' + e + ' >',
-                                        true
-                                    );
-                                }
-                            } else {
-                                adapter.log.warn('Error on getting address from PositionStack');
-                                adapter.setState(
-                                    element.deviceClass +
-                                        '.' +
-                                        discoveryId +
-                                        '.Location.CurrentAddress',
-                                    '< ErrorCode ' + res.statusCode + ' >',
-                                    true
-                                );
-                            }
-                        } else if (adapter.config.mapprovider === 'tomtom') {
-                            if (!err && res.statusCode == 200) {
-                                try {
-                                    var CurrentAddress = data.addresses[0].address.freeformAddress;
-                                    adapter.setState(
-                                        element.deviceClass +
-                                            '.' +
-                                            discoveryId +
-                                            '.Location.CurrentAddress',
-                                        CurrentAddress,
-                                        true
-                                    );
-                                } catch (e) {
-                                    adapter.log.warn(
-                                        'Error on getting address from TomTom-API: ' + e
-                                    );
-                                    adapter.setState(
-                                        element.deviceClass +
-                                            '.' +
-                                            discoveryId +
-                                            '.Location.CurrentAddress',
-                                        '< Error ' + e + ' >',
-                                        true
-                                    );
-                                }
-                            } else {
-                                adapter.log.warn('Error on getting address from TomTom-API');
-                                adapter.setState(
-                                    element.deviceClass +
-                                        '.' +
-                                        discoveryId +
-                                        '.Location.CurrentAddress',
-                                    '< ErrorCode ' + res.statusCode + ' >',
-                                    true
-                                );
-                            }
-                        }
-                    }
-                );
 
                 await adapter.setObjectNotExistsAsync(
                     element.deviceClass + '.' + discoveryId + '.Location.CurrentLocation',
@@ -897,7 +523,7 @@ function createOrUpdateDevices(data, adapter) {
                 );
 
                 let activeLocationsWithDistance = [];
-                var currentLocation = new GeoPoint(
+                const currentLocation = new GeoPoint(
                     element.location.latitude,
                     element.location.longitude
                 );

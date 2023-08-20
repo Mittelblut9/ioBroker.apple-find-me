@@ -13,13 +13,13 @@ function resetErrCount(adapter) {
 }
 
 function getErrCount(adapter) {
-    return new Promise((resolve, reject) => { 
+    return new Promise((resolve, reject) => {
         adapter.getState('iCloudAccountErrorCount', (err, state) => {
             if (state && state.val) {
                 resolve(state.val);
             } else {
                 resolve(errCount);
-            } 
+            }
         });
     });
 }

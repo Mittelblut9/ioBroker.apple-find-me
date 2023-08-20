@@ -41,7 +41,7 @@
         "@iobroker/adapter-core": "^3.0.3",
         "apple-icloud": "github:MauriceConrad/iCloud-API",
         "geopoint": "^1.0.1",
-        "moment-timezone": "^0.5.35",
+        "moment-timezone": "^0.5.43",
         "urllib": "^3.17.1"
     },
     "devDependencies": {
