@@ -85,7 +85,6 @@ module.exports.saveObjectsOnStartup = async function (adapter) {
         native: {},
     });
 
-    
     await adapter.setObjectNotExistsAsync('iCloudAccountErrorCount', {
         type: 'state',
         common: {

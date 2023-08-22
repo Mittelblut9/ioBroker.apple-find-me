@@ -1,8 +1,6 @@
-const { getRandomObject } = require('../../utils/getRandomObject');
 const { sleep } = require('../../utils/sleep');
 const moment = require('moment-timezone');
 const GeoPoint = require('geopoint');
-const { elevationRequest } = require('./httpRequests/elevation');
 const { addressRequest } = require('./httpRequests/address');
 
 /**
@@ -15,7 +13,6 @@ function createOrUpdateDevices(data, adapter) {
         //Sleep for 5 Seconds to prevent Rate-Limits
         sleep(5000);
 
-        const deviceColor = element.deviceColor ? element.deviceColor : '';
         const deviceNameWithId = `${element.name.replace(/[^a-zA-Z0-9]/g, '')}${element.id.replace(
             /[^a-zA-Z0-9]/g,
             ''
@@ -26,15 +23,6 @@ function createOrUpdateDevices(data, adapter) {
         const discoveryId = element.deviceDiscoveryId || dummyDiscoveryId;
 
         adapter.log.debug('Device: ' + element.rawDeviceModel + ' Discovery ID: ' + discoveryId);
-
-        const deviceClass = element.deviceClass || 'unknown';
-        const deviceId = element.id || 'unknown';
-        const name = element.name || 'unknown';
-        const batteryStatus = element.batteryStatus || 'unknown';
-        const batteryLevel = element.batteryLevel || 'unknown';
-
-        //location
-        const location = element.location || 'unknown';
 
         if (discoveryId != '') {
             await adapter.setObjectNotExistsAsync(element.deviceClass, {
@@ -352,35 +340,6 @@ function createOrUpdateDevices(data, adapter) {
                         native: {},
                     }
                 );
-
-                const elevation = await elevationRequest(
-                    element.location.latitude,
-                    element.location.longitude
-                )
-                    .then((res) => {
-                        const url = res.url;
-                        const elevation = res.elevation;
-
-                        adapter.log.debug('Elevation-Address: ' + url);
-
-                        adapter.setState(
-                            element.deviceClass + '.' + discoveryId + '.Location.Altitude',
-                            elevation,
-                            true
-                        );
-                    })
-                    .catch((err) => {
-                        adapter.log.error(
-                            `Error while getting elevation data. Setting to 0. Error: ${JSON.stringify(
-                                err
-                            )}`
-                        );
-                        adapter.setState(
-                            element.deviceClass + '.' + discoveryId + '.Location.Altitude',
-                            0,
-                            true
-                        );
-                    });
 
                 await adapter.setObjectNotExistsAsync(
                     element.deviceClass + '.' + discoveryId + '.Location.Accuracy',
