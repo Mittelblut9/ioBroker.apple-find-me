@@ -2,15 +2,17 @@ module.exports.saveObjectsOnStartup = async function (adapter) {
     await adapter.setObjectNotExistsAsync('iCloudAccountSession', {
         type: 'state',
         common: {
-            role: 'text',
+            role: 'meta',
             def: '',
-            type: 'object',
+            type: 'string',
             read: true,
-            write: false,
+            write: true,
             name: 'iCloudAccountSession',
             desc: 'The saved session for to easily login to iCloud',
         },
-        native: {},
+        native: {
+            protectedNative: true,
+        },
     });
 
     await adapter.setObjectNotExistsAsync('Connection', {
@@ -47,7 +49,7 @@ module.exports.saveObjectsOnStartup = async function (adapter) {
         common: {
             name: 'Devices',
             role: 'meta',
-            type: 'number',
+            type: 'string',
             read: true,
             write: false,
             desc: 'All devices associated with the iCloud account',
@@ -75,12 +77,11 @@ module.exports.saveObjectsOnStartup = async function (adapter) {
         type: 'state',
         common: {
             name: 'Security Code',
-            role: 'button',
-            type: 'boolean',
+            role: 'meta',
+            type: 'number',
             read: true,
             write: true,
             desc: 'Security Code for 2FA',
-            def: false,
         },
         native: {},
     });

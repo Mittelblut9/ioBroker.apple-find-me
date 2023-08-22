@@ -6,14 +6,16 @@ module.exports.refreshDevices = async function (adapter, myCloud) {
         try {
             adapter.log.info('Refreshing devices...');
 
-            const devices = (await getDevices(myCloud)).content;
-
-            adapter.setState('Devices', JSON.stringify(devices), true);
+            const response = await getDevices(myCloud);
+            const devices = response.content;
 
             if (devices) {
-                this.log.info(`Found ${devices.length} devices associated with your account.`);
-                adapter.setState('Connection', true, true);
                 createOrUpdateDevices(devices, adapter);
+
+                adapter.log.info(
+                    `Found ${devices.length} devices associated with your account and successfully refreshed them.`
+                );
+                adapter.setState('Connection', true, true);
             } else {
                 adapter.setState('Connection', false, true);
 
@@ -23,6 +25,7 @@ module.exports.refreshDevices = async function (adapter, myCloud) {
             }
             return resolve(true);
         } catch (err) {
+            adapter.log.error('Error while refreshing devices: ' + JSON.stringify(err));
             return resolve(false);
         }
     });

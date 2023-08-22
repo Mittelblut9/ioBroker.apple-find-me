@@ -52,9 +52,9 @@ module.exports.loginToApple = async function (adapter) {
                 await sleep(30000);
             }
 
-            myCloud.securityCode = adapter.config.securityCode || null;
-
             const myCloud = new iCloud(session, username, password);
+
+            myCloud.securityCode = adapter.config.securityCode || null;
 
             myCloud.on('ready', async function () {
                 if (!myCloud.loggedIn) {
@@ -67,7 +67,7 @@ module.exports.loginToApple = async function (adapter) {
 
                 const twoFactorAuthRequired = myCloud.twoFactorAuthenticationIsRequired;
 
-                if (!twoFactorAuthRequired) {
+                if (!twoFactorAuthRequired && !myCloud.securityCode) {
                     return resolve({
                         statusCode: 404,
                         message: 'Missing two factor authentication code.',
@@ -116,10 +116,11 @@ function getICloudSession(adapter) {
             if (err) {
                 adapter.log.error('Error while reading Session from State: ' + err);
             }
+            const decyptedSession = adapter.decrypt(state.val);
 
-            if (state && state.val) {
+            if (decyptedSession) {
                 try {
-                    const session = JSON.parse(state.val);
+                    const session = JSON.parse(decyptedSession);
                     resolve(session);
                 } catch (err) {
                     adapter.log.error('Error while parsing Session from State: (Its empty)' + err);
@@ -133,7 +134,8 @@ function getICloudSession(adapter) {
 }
 
 function setICloudSession(adapter, session) {
-    adapter.setState('iCloudAccountSession', JSON.stringify(session), true);
+    const encryptedSession = adapter.encrypt(JSON.stringify(session));
+    adapter.setState('iCloudAccountSession', encryptedSession, true);
 }
 
 function hasTooManyRequests() {

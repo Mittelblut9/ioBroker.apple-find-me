@@ -218,6 +218,6 @@
     },
     "objects": [],
     "instanceObjects": [],
-    "encryptedNative": ["username", "password"],
-    "protectedNative": ["username", "password"]
+    "encryptedNative": ["username", "password", "iCloudAccountSession"],
+    "protectedNative": ["username", "password", "iCloudAccountSession"]
 }
