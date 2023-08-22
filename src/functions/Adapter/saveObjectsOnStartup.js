@@ -84,4 +84,19 @@ module.exports.saveObjectsOnStartup = async function (adapter) {
         },
         native: {},
     });
+
+    
+    await adapter.setObjectNotExistsAsync('iCloudAccountErrorCount', {
+        type: 'state',
+        common: {
+            name: 'Error Count',
+            role: 'meta',
+            type: 'number',
+            read: true,
+            write: false,
+            desc: '',
+            def: 0,
+        },
+        native: {},
+    });
 };
