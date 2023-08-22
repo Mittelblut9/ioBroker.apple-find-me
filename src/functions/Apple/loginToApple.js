@@ -65,6 +65,15 @@ module.exports.loginToApple = async function (adapter) {
                     });
                 }
 
+                const twoFactorAuthRequired = myCloud.twoFactorAuthenticationIsRequired;
+
+                if (!twoFactorAuthRequired) {
+                    return resolve({
+                        statusCode: 404,
+                        message: 'Missing two factor authentication code.',
+                    });
+                }
+
                 adapter.log.info('Logged in to iCloud');
 
                 setICloudSession(adapter, myCloud.exportSession());
