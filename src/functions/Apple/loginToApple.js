@@ -52,6 +52,8 @@ module.exports.loginToApple = async function (adapter) {
                 await sleep(30000);
             }
 
+            myCloud.securityCode = adapter.config.securityCode || null;
+
             const myCloud = new iCloud(session, username, password);
 
             myCloud.on('ready', async function () {
