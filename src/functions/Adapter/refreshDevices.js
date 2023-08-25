@@ -1,4 +1,5 @@
 const { getDevices } = require('../Apple/getDevices');
+const { loginToApple } = require('../Apple/loginToApple');
 const createOrUpdateDevices = require('./createOrUpdateDevices');
 
 module.exports.refreshDevices = async function (adapter, myCloud) {
@@ -25,6 +26,27 @@ module.exports.refreshDevices = async function (adapter, myCloud) {
             }
             return resolve(true);
         } catch (err) {
+
+            adapter.log.info('Refreshing devices failed. Please check your credentials.' + err.code);
+
+            if (err.code === 11) {
+                adapter.log.debug('Error code 11. Trying to login again.');
+                adapter.setState('Connection', false, true);
+                await loginToApple(adapter, true)
+                    .then(async (response) => {
+                        if (response.statusCode === 200) {
+                            adapter.log.debug('Login successful. Refreshing devices again.');
+                            await this.refreshDevices(adapter, myCloud);
+                        } else {
+                            adapter.log.error('Login failed. Please check your credentials.');
+                            return resolve(false);
+                        }
+                    })
+                    .catch((err) => {
+                        return resolve(false);
+                    })
+            }
+
             adapter.log.error('Error while refreshing devices: ' + JSON.stringify(err));
             return resolve(false);
         }
