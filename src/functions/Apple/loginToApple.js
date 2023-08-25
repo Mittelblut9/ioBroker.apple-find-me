@@ -7,7 +7,7 @@ let loginRequest = 0;
 let maxLoginRequestPerMin = 3;
 let requestsInLastMin = [];
 
-module.exports.loginToApple = async function (adapter) {
+module.exports.loginToApple = async function (adapter, silent = false) {
     return new Promise(async (resolve, reject) => {
         if (adapter.config.developerMode === '1') {
             adapter.log.info('Developer mode is active. Using example data.');
@@ -29,8 +29,8 @@ module.exports.loginToApple = async function (adapter) {
             });
         }
 
-        adapter.log.info('Logging in to iCloud...');
-        adapter.log.info('Username: ' + username);
+        logInfo(silent, 'Logging in to iCloud...');
+        logInfo(silent, 'Username: ' + username);
 
         try {
             let session = await getICloudSession(adapter);
@@ -41,7 +41,7 @@ module.exports.loginToApple = async function (adapter) {
                 );
                 session = {};
             } else {
-                adapter.log.info('Session found. Trying to login with existing Session.');
+                logInfo(silent, 'Session found. Trying to login with existing Session.');
             }
 
             const maxLoginRequestReached = hasTooManyRequests();
@@ -74,7 +74,7 @@ module.exports.loginToApple = async function (adapter) {
                     });
                 }
 
-                adapter.log.info('Logged in to iCloud');
+                logInfo(silent, 'Logged in to iCloud');
 
                 setICloudSession(adapter, myCloud.exportSession());
 
@@ -109,6 +109,12 @@ module.exports.loginToApple = async function (adapter) {
         }
     });
 };
+
+function logInfo(silent, message) {
+    if (!silent) {
+        adapter.log.info(message);
+    }
+}
 
 function getICloudSession(adapter) {
     return new Promise((resolve, reject) => {
