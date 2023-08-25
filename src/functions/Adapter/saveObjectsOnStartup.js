@@ -73,19 +73,6 @@ module.exports.saveObjectsOnStartup = async function (adapter) {
     });
     adapter.setState('Refresh', false, true);
 
-    await adapter.setObjectNotExistsAsync('securityCode', {
-        type: 'state',
-        common: {
-            name: 'Security Code',
-            role: 'meta',
-            type: 'number',
-            read: true,
-            write: true,
-            desc: 'Security Code for 2FA',
-        },
-        native: {},
-    });
-
     await adapter.setObjectNotExistsAsync('iCloudAccountErrorCount', {
         type: 'state',
         common: {
