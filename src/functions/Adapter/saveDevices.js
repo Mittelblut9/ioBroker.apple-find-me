@@ -1,6 +1,4 @@
 module.exports.saveDevices = (adapter, devices) => {
-    adapter.log.info(JSON.stringify(devices));
-
     const tmpDevices = devices;
 
     let sanitizedDevices = [];
