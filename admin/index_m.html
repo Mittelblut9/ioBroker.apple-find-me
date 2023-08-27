@@ -35,71 +35,7 @@
                 $('.value').each(function () {
                     var $key = $(this);
                     var id = $key.attr('id');
-                    /*if (id === 'password') {
-                    settings[id] = decrypt(secret, settings[id]);
-                }*/
-                    /*if(id === 'map_provider'){
-                    showMessage(_($key.val()));
-                }*/
 
-                    if (id === 'mapprovider') {
-                        $('#mapprovider').val(settings[id]).select();
-                        switch (settings[id]) {
-                            case 'osm':
-                                $('#div_api_key').hide();
-                                break;
-                            case 'here':
-                                $('#div_api_key').show();
-                                $('#apikey_link').attr('href', 'https://developer.here.com/');
-                                $('#apikey_link').attr('title', 'Create API-KEY for Here-Maps');
-                                break;
-                            case 'bing':
-                                $('#div_api_key').show();
-                                $('#apikey_link').attr('href', 'https://www.bingmapsportal.com/');
-                                $('#apikey_link').attr('title', 'Create API-KEY for Bing-Maps');
-                                break;
-                            case 'google':
-                                $('#div_api_key').show();
-                                $('#apikey_link').attr(
-                                    'href',
-                                    'https://developers.google.com/maps/documentation/javascript/get-api-key'
-                                );
-                                $('#apikey_link').attr('title', 'Create API-KEY for Google-Maps');
-                                break;
-                            case 'geoapify':
-                                $('#div_api_key').show();
-                                $('#apikey_link').attr('href', 'https://www.geoapify.com');
-                                $('#apikey_link').attr('title', 'Create API-KEY for Geoapify');
-                                break;
-                            case 'locationiq_eu':
-                                $('#div_api_key').show();
-                                $('#apikey_link').attr('href', 'https://locationiq.com');
-                                $('#apikey_link').attr('title', 'Create API-KEY for LocationIQ');
-                                break;
-                            case 'locationiq_usa':
-                                $('#div_api_key').show();
-                                $('#apikey_link').attr('href', 'https://locationiq.com');
-                                $('#apikey_link').attr('title', 'Create API-KEY for LocationIQ');
-                                break;
-                            case 'positionstack':
-                                $('#div_api_key').show();
-                                $('#apikey_link').attr('href', 'https://positionstack.com');
-                                $('#apikey_link').attr('title', 'Create API-KEY for PositionStack');
-                                break;
-                            case 'tomtom':
-                                $('#div_api_key').show();
-                                $('#apikey_link').attr(
-                                    'href',
-                                    'https://developer.tomtom.com/store/maps-api'
-                                );
-                                $('#apikey_link').attr(
-                                    'title',
-                                    'Create API-KEY for TomTom-Developer-API'
-                                );
-                                break;
-                            default:
-                        }
-                    }
                     if (id === 'refresh') {
                         $('#refresh').val(settings[id]).select();
                     }
@@ -131,65 +67,6 @@
                     settings.locations[p].longitude = settings.locations[p].longitude || '';
                     settings.locations[p].active = settings.locations[p].active || '';
                 }
-
-                $('#mapprovider').change(function () {
-                    var $mapprovider = $('#mapprovider');
-                    switch ($mapprovider.val()) {
-                        case 'osm':
-                            $('#div_api_key').hide();
-                            break;
-                        case 'here':
-                            $('#div_api_key').show();
-                            $('#apikey_link').attr('href', 'https://developer.here.com/');
-                            $('#apikey_link').attr('title', 'Create API-KEY for Here-Maps');
-                            break;
-                        case 'bing':
-                            $('#div_api_key').show();
-                            $('#apikey_link').attr('href', 'https://www.bingmapsportal.com/');
-                            $('#apikey_link').attr('title', 'Create API-KEY for Bing-Maps');
-                            break;
-                        case 'google':
-                            $('#div_api_key').show();
-                            $('#apikey_link').attr(
-                                'href',
-                                'https://developers.google.com/maps/documentation/javascript/get-api-key'
-                            );
-                            $('#apikey_link').attr('title', 'Create API-KEY for Google-Maps');
-                            break;
-                        case 'geoapify':
-                            $('#div_api_key').show();
-                            $('#apikey_link').attr('href', 'https://www.geoapify.com');
-                            $('#apikey_link').attr('title', 'Create API-KEY for Geoapify');
-                            break;
-                        case 'locationiq_eu':
-                            $('#div_api_key').show();
-                            $('#apikey_link').attr('href', 'https://locationiq.com');
-                            $('#apikey_link').attr('title', 'Create API-KEY for LocationIQ');
-                            break;
-                        case 'locationiq_usa':
-                            $('#div_api_key').show();
-                            $('#apikey_link').attr('href', 'https://locationiq.com');
-                            $('#apikey_link').attr('title', 'Create API-KEY for LocationIQ');
-                            break;
-                        case 'positionstack':
-                            $('#div_api_key').show();
-                            $('#apikey_link').attr('href', 'https://positionstack.com');
-                            $('#apikey_link').attr('title', 'Create API-KEY for PositionStack');
-                            break;
-                        case 'tomtom':
-                            $('#div_api_key').show();
-                            $('#apikey_link').attr(
-                                'href',
-                                'https://developer.tomtom.com/store/maps-api'
-                            );
-                            $('#apikey_link').attr(
-                                'title',
-                                'Create API-KEY for TomTom-Developer-API'
-                            );
-                            break;
-                        default:
-                    }
-                });
 
                 onChange(false);
 
@@ -283,35 +160,6 @@
                                 Notification and save<br />
                                 5. Restart the instance
                             </p>
-                        </div>
-
-                        <div class="input-field col s6">
-                            <i class="material-icons prefix">map</i>
-                            <select class="value" id="mapprovider">
-                                <option value="osm">OpenStreetMaps</option>
-                                <option value="bing">Bing-Maps</option>
-                                <option value="here">Here-Maps</option>
-                                <option value="google">Google-Maps</option>
-                                <option value="geoapify">Geoapify</option>
-                                <option value="locationiq_eu">LocationIQ (Europe)</option>
-                                <option value="locationiq_usa">LocationIQ (USA)</option>
-                                <option value="positionstack">PositionStack</option>
-                                <option value="tomtom">TomTom</option>
-                            </select>
-                            <label class="translate" for="mapprovider">Map-Provider</label>
-                        </div>
-
-                        <div class="col s6 input-field" id="div_api_key">
-                            <i class="material-icons prefix">vpn_key</i>
-                            <input type="text" class="value" id="apikey" />
-                            <label id="apikey" for="apikey" class="translate">API-Key</label>
-                            <a
-                                id="apikey_link"
-                                href="https://developer.here.com/"
-                                target="_blank"
-                                title="Create API-Key"
-                                ><img src="key.png" class="keyIcon"
-                            /></a>
                         </div>
 
                         <div class="col s6 input-field">

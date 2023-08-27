@@ -199,7 +199,9 @@ function createOrUpdateDevices(data, adapter) {
             if (
                 element.hasOwnProperty('location') &&
                 element.location != undefined &&
-                element.location != null
+                element.location != null &&
+                !element.location.isOld && 
+                !element.location.isInaccurate
             ) {
                 adapter.log.debug(
                     'Device: ' +
@@ -436,35 +438,11 @@ function createOrUpdateDevices(data, adapter) {
                     }
                 );
 
-                if (adapter.config.mapprovider && adapter.config.apikey.search('XXX') === -1) {
-                    try {
-                        const { address, url } = await addressRequest({
-                            mapProvider: adapter.config.mapprovider,
-                            apiKey: adapter.config.apikey,
-                            lat: element.location.latitude,
-                            lng: element.location.longitude,
-                        });
-
-                        adapter.log.debug('Using MapApiUrl-Address: ' + url);
-
-                        adapter.setState(
-                            element.deviceClass + '.' + discoveryId + '.Location.CurrentAddress',
-                            CurrentAddress,
-                            true
-                        );
-                    } catch (err) {
-                        adapter.log.warn(
-                            `Error on getting address from OpenStreetMaps: ${JSON.stringify(
-                                err
-                            )}. Setting to < ErrorCode ${err.statusCode} >`
-                        );
-                        adapter.setState(
-                            element.deviceClass + '.' + discoveryId + '.Location.CurrentAddress',
-                            '< ErrorCode ' + err.statusCode + ' >',
-                            true
-                        );
-                    }
-                }
+                adapter.setState(
+                    element.deviceClass + '.' + discoveryId + '.Location.CurrentAddress',
+                    element.location.addresses.en.formattedAddressLines.join(', '),
+                    true
+                );
 
                 await adapter.setObjectNotExistsAsync(
                     element.deviceClass + '.' + discoveryId + '.Location.CurrentLocation',
