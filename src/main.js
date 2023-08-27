@@ -14,6 +14,7 @@ const playSound = require('./functions/Apple/playSound');
 const { getErrCount } = require('./data/errCount');
 const { refreshDevices } = require('./functions/Adapter/refreshDevices');
 const { sleep } = require('./utils/sleep');
+const { saveDevices } = require('./functions/Adapter/saveDevices');
 
 class FindMy extends utils.Adapter {
     myCloud;
@@ -128,12 +129,12 @@ class FindMy extends utils.Adapter {
                         `);
             }
 
-            this.setState('Devices', JSON.stringify(devices), true);
-
             this.log.info(
                 'Creating or updating devices. This may take a while depending on the number of devices you have.'
             );
             createOrUpdateDevices(devices, this);
+
+            saveDevices(this, devices);
         } else {
             this.setState('Connection', false, true);
         }
