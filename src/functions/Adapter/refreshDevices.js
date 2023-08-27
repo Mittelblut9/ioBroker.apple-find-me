@@ -35,8 +35,8 @@ module.exports.refreshDevices = async function (adapter, myCloud) {
                 await loginToApple(adapter, true)
                     .then(async (response) => {
                         if (response.statusCode === 200) {
-                            adapter.log.debug('Login successful. Refreshing devices again.');
-                            await this.refreshDevices(adapter, myCloud);
+                            adapter.log.debug('Login successful. Refreshing devices again.' + JSON.stringify(response.myCloud));
+                            await this.refreshDevices(adapter, response.myCloud);
                         } else {
                             adapter.log.error('Login failed. Please check your credentials.');
                             return resolve(false);
