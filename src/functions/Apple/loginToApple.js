@@ -29,8 +29,8 @@ module.exports.loginToApple = async function (adapter, silent = false) {
             });
         }
 
-        logInfo(silent, 'Logging in to iCloud...');
-        logInfo(silent, 'Username: ' + username);
+        logInfo(adapter, silent, 'Logging in to iCloud...');
+        logInfo(adapter, silent, 'Username: ' + username);
 
         try {
             let session = await getICloudSession(adapter);
@@ -41,7 +41,7 @@ module.exports.loginToApple = async function (adapter, silent = false) {
                 );
                 session = {};
             } else {
-                logInfo(silent, 'Session found. Trying to login with existing Session.');
+                logInfo(adapter, silent, 'Session found. Trying to login with existing Session.');
             }
 
             const maxLoginRequestReached = hasTooManyRequests();
@@ -74,7 +74,7 @@ module.exports.loginToApple = async function (adapter, silent = false) {
                     });
                 }
 
-                logInfo(silent, 'Logged in to iCloud');
+                logInfo(adapter, silent, 'Logged in to iCloud');
 
                 setICloudSession(adapter, myCloud.exportSession());
 
@@ -110,9 +110,11 @@ module.exports.loginToApple = async function (adapter, silent = false) {
     });
 };
 
-function logInfo(silent, message) {
+function logInfo(adapter, silent, message) {
     if (!silent) {
         adapter.log.info(message);
+    }else {
+        adapter.log.debug(message);
     }
 }
 

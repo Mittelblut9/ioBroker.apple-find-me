@@ -3,5 +3,7 @@ module.exports.getDevices = async function (myCloud) {
         return null;
     }
 
+    myCloud.FindMe.initialized = false;
+
     return await myCloud.FindMe.get();
 };
