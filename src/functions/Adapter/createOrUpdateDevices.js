@@ -200,7 +200,7 @@ function createOrUpdateDevices(data, adapter) {
                 element.hasOwnProperty('location') &&
                 element.location != undefined &&
                 element.location != null &&
-                !element.location.isOld && 
+                !element.location.isOld &&
                 !element.location.isInaccurate
             ) {
                 adapter.log.debug(

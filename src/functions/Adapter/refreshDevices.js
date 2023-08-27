@@ -26,8 +26,9 @@ module.exports.refreshDevices = async function (adapter, myCloud) {
             }
             return resolve(true);
         } catch (err) {
-
-            adapter.log.info('Refreshing devices failed. Please check your credentials.' + err.code);
+            adapter.log.info(
+                'Refreshing devices failed. Please check your credentials.' + err.code
+            );
 
             if (err.code === 11) {
                 adapter.log.debug('Error code 11. Trying to login again.');
@@ -35,7 +36,10 @@ module.exports.refreshDevices = async function (adapter, myCloud) {
                 await loginToApple(adapter, true)
                     .then(async (response) => {
                         if (response.statusCode === 200) {
-                            adapter.log.debug('Login successful. Refreshing devices again.' + JSON.stringify(response.myCloud));
+                            adapter.log.debug(
+                                'Login successful. Refreshing devices again.' +
+                                    JSON.stringify(response.myCloud)
+                            );
                             await this.refreshDevices(adapter, response.myCloud);
                         } else {
                             adapter.log.error('Login failed. Please check your credentials.');
@@ -44,7 +48,7 @@ module.exports.refreshDevices = async function (adapter, myCloud) {
                     })
                     .catch((err) => {
                         return resolve(false);
-                    })
+                    });
             }
 
             adapter.log.error('Error while refreshing devices: ' + JSON.stringify(err));

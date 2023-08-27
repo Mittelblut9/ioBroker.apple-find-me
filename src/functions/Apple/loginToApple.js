@@ -59,13 +59,13 @@ module.exports.loginToApple = async function (adapter, silent = false) {
             myCloud.securityCode = adapter.config.securityCode || null;
 
             setTimeout(() => {
-                if(!loggedIn && session && Object.keys(session).length > 0) {
-                    adapter.log.error('Login timed out. Will try again with a new session')
+                if (!loggedIn && session && Object.keys(session).length > 0) {
+                    adapter.log.error('Login timed out. Will try again with a new session');
                     increaseErrCount(adapter);
                     setICloudSession(adapter, {});
                     return loginToApple(adapter, silent);
                 }
-            }, 10000)
+            }, 10000);
 
             myCloud.on('ready', async function () {
                 loggedIn = true;
@@ -126,7 +126,7 @@ module.exports.loginToApple = async function (adapter, silent = false) {
 function logInfo(adapter, silent, message) {
     if (!silent) {
         adapter.log.info(message);
-    }else {
+    } else {
         adapter.log.debug(message);
     }
 }
