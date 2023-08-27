@@ -7,6 +7,8 @@ let loginRequest = 0;
 let maxLoginRequestPerMin = 3;
 let requestsInLastMin = [];
 
+let loggedIn = false;
+
 module.exports.loginToApple = async function (adapter, silent = false) {
     return new Promise(async (resolve, reject) => {
         if (adapter.config.developerMode === '1') {
@@ -56,7 +58,18 @@ module.exports.loginToApple = async function (adapter, silent = false) {
 
             myCloud.securityCode = adapter.config.securityCode || null;
 
+            setTimeout(() => {
+                if(!loggedIn && session && Object.keys(session).length > 0) {
+                    adapter.log.error('Login timed out. Will try again with a new session')
+                    increaseErrCount(adapter);
+                    setICloudSession(adapter, {});
+                    return loginToApple(adapter, silent);
+                }
+            }, 10000)
+
             myCloud.on('ready', async function () {
+                loggedIn = true;
+
                 if (!myCloud.loggedIn) {
                     adapter.log.error('Login failed. Please check your credentials.');
                     return resolve({
