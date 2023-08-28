@@ -30,6 +30,7 @@
         "release": "release-script",
         "lint": "eslint",
         "prepare": "husky install",
+        "postinstall": "patch-package",
         "format": "prettier --config .tools/prettier/.prettierrc --ignore-path .tools/prettier/.prettierignore --write .",
         "check-format": "prettier --config .tools/prettier/.prettierrc --ignore-path .tools/prettier/.prettierignore --check ."
     },
@@ -42,6 +43,7 @@
         "apple-icloud": "github:MauriceConrad/iCloud-API",
         "geopoint": "^1.0.1",
         "moment-timezone": "^0.5.43",
+        "patch-package": "^8.0.0",
         "urllib": "^3.17.1"
     },
     "devDependencies": {
