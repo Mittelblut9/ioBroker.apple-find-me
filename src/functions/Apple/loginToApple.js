@@ -63,7 +63,7 @@ module.exports.loginToApple = async function (adapter, silent = false) {
                     adapter.log.error('Login timed out. Will try again with a new session');
                     increaseErrCount(adapter);
                     setICloudSession(adapter, {});
-                    return loginToApple(adapter, silent);
+                    return this.loginToApple(adapter, silent);
                 }
             }, 10000);
 
