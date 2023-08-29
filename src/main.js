@@ -102,48 +102,50 @@ class FindMy extends utils.Adapter {
             }`
         );
 
-        if (response.statusCode == 200) {
-            this.setState('Connection', true, true);
-
-            this.myCloud = response?.myCloud;
-
-            let devices = null;
-            try {
-                devices =
-                    this.config.developerMode === '1'
-                        ? response.device
-                        : (await getDevices(this.myCloud)).content;
-            } catch (err) {
-                this.log.error(err);
-                this.log.error(
-                    'An error occurred while fetching your devices. This is most likely due no devices being associated with your account. Please check your account and try again.'
-                );
-                return;
-            }
-
-            this.log.info(`Found ${devices.length} devices associated with your account.`);
-
-            if (!this.config.developerMode === '1') {
-                this.log.info(`
-                    (${devices.map((device) => device.name).join(', ')})
-                        `);
-            }
-
-            this.log.info(
-                'Creating or updating devices. This may take a while depending on the number of devices you have.'
-            );
-            createOrUpdateDevices(devices, this);
-
-            saveDevices(this, devices);
-        } else {
+        if (response.statusCode !== 200) {
             this.setState('Connection', false, true);
+            return;
         }
+
+        this.setState('Connection', true, true);
+
+        this.myCloud = response?.myCloud;
+
+        let devices = null;
+        try {
+            devices =
+                this.config.developerMode === '1'
+                    ? response.device
+                    : (await getDevices(this.myCloud)).content;
+        } catch (err) {
+            this.log.error(err);
+            this.log.error(
+                'An error occurred while fetching your devices. This is most likely due no devices being associated with your account. Please check your account and try again.'
+            );
+            return;
+        }
+
+        this.log.info(`Found ${devices.length} devices associated with your account.`);
+
+        if (!this.config.developerMode === '1') {
+            this.log.info(`(${devices.map((device) => device.name).join(', ')})`);
+        }
+
+        this.log.info(
+            'Creating or updating devices. This may take a while depending on the number of devices you have.'
+        );
+        createOrUpdateDevices(devices, this);
 
         //init refresh
         this.refresh(true);
 
         //refresh every x minutes
         this.refresh();
+
+        //wait 4 seconds to wait until the first refresh is done
+        setTimeout(() => {
+            saveDevices(this, devices);
+        }, 1000 * 4); // 4 seconds
     }
 
     refresh(manualRefresh = false) {
