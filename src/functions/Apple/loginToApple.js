@@ -1,4 +1,4 @@
-const iCloud = require('icloud.js');
+const iCloud = require('icloudjs');
 const exampleData = require('../../data/device.example.json');
 const { increaseErrCount, getErrCount, resetErrCount } = require('../../data/errCount');
 const { sleep } = require('../../utils/sleep');
