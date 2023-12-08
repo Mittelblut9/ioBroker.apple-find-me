@@ -40,8 +40,8 @@
     "readmeFilename": "README.md",
     "dependencies": {
         "@iobroker/adapter-core": "^3.0.3",
-        "apple-icloud": "github:MauriceConrad/iCloud-API",
         "geopoint": "^1.0.1",
+        "icloudjs": "^1.5.0",
         "moment-timezone": "^0.5.43",
         "patch-package": "^8.0.0",
         "urllib": "^3.17.1"
